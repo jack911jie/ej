@@ -8,6 +8,7 @@ from itertools import combinations
 import copy
 import pandas as pd
 import openpyxl
+from openpyxl.styles import Font
 import logging
  
 logging.basicConfig(level=logging.WARNING, format=' %(levelname)s - %(lineno)d 行- %(message)s')
@@ -782,24 +783,42 @@ class LiuYue(GanZhi):
         df_liuyue=pd.DataFrame(data=res,columns=['流月起始日','天干注意','地支注意','十神注意','流月','流年','大运','原局'])
         df_liuyue=df_liuyue[['原局','大运','流年','流月','流月起始日','天干注意','地支注意','十神注意']]
         df_liuyue['描述']=''
+        df_liuyue['助运颜色']=''
+        df_liuyue['头像提示']=''
         # print(df_liuyue)
         return df_liuyue
 
-    def export_liuyue_xlsx(self,cus_name,yy,sex,y,m,d,h,min,zishi=0,real_sun_time='no',longtitude=120,dy_mode='old',out_dir='e:/temp/ejj/客户流年',show_mode='save'):
+    def export_liuyue_xlsx(self,cus_name,yy,sex,y,m,d,h,min,zishi=0,real_sun_time='no',birth_place='',longtitude=120,dy_mode='old',cal_from='jan',out_dir='e:/temp/ejj/客户流年',show_mode='save'):
         print('\n正在排月运……',end='')
-        df_res=self.pai_liu_yue(yy=yy,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
+
+        if cal_from=='jan':
+            df_y_1=self.pai_liu_yue(yy=yy-1,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
+            df_jan=df_y_1.iloc[[11]]
+            df_y_this=self.pai_liu_yue(yy=yy,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
+            df_feb_dec=df_y_this.iloc[1:,:]
+            df_res=pd.concat([df_jan,df_feb_dec])
+
+        else:
+            df_res=self.pai_liu_yue(yy=yy,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
         
-        sex_txt='男' if sex=='m' else '女'
         if show_mode=='save':
             print('完成\n\n正在保存……',end='')
             save_dir=os.path.join(out_dir,cus_name)
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
+
+            if sex=='m':
+                sex_txt='男'
+            elif sex=='f':
+                sex_txt='女'
+            else:
+                sex_txt='男'
             save_name=os.path.join(save_dir,str(yy)+'-'+cus_name+'-'+sex_txt+'-流月.xlsx')
             df_res.to_excel(save_name,sheet_name='流月',index=False)
 
             #格式
-            self.xlsx_format(save_name)
+            birth_info=[cus_name,sex,y,m,d,h,min,birth_place]
+            self.xlsx_format(src=save_name,birth_info=birth_info)
 
             print('完成。文件名：{}'.format(save_name))
 
@@ -807,9 +826,28 @@ class LiuYue(GanZhi):
         else:
             print('完成\n\n结果如下：\n\n')
     
-    def xlsx_format(self,src):
+    def xlsx_format(self,src,birth_info):
+        birthday=str(birth_info[2])+'-'+str(birth_info[3]).zfill(2)+'-'+str(birth_info[4]).zfill(2)+'  '+str(birth_info[5]).zfill(2)+':'+str(birth_info[6]).zfill(2)
+        if birth_info[1]=='m':
+            sex_txt='男'
+        elif birth_info[1]=='f':
+            sex_txt='女'
+        else:
+            sex_txt='男'
+
+        if birth_info[7]:
+            txt_a16=','.join([str(birth_info[0]),sex_txt,birthday,birth_info[7]])
+        else:
+            txt_a16=','.join([str(birth_info[0]),sex_txt,birthday])
+
         wb=openpyxl.load_workbook(src)
         sht=wb['流月']
+
+        sht['A15']='客户信息'        
+        sht['A16']=txt_a16
+        sht['A18']='总体描述'
+
+
 
         #行高
         for row_id in range(2,13):
@@ -826,6 +864,8 @@ class LiuYue(GanZhi):
         sht.column_dimensions['g'].width=35
         sht.column_dimensions['h'].width=35
         sht.column_dimensions['i'].width=35
+        sht.column_dimensions['j'].width=13
+        sht.column_dimensions['k'].width=20
 
         
         #自动换行
@@ -834,6 +874,9 @@ class LiuYue(GanZhi):
             # print(cell)
                 cell.alignment=openpyxl.styles.Alignment(wrap_text=True)
 
+        #A15,A18加粗
+        sht['A15'].font = Font(bold=True)
+        sht['A18'].font = Font(bold=True)
         # sht['a1'].alignment=openpyxl.styles.Alignment(wrap_text=True)
 
         wb.save(src)
@@ -842,7 +885,7 @@ class LiuYue(GanZhi):
 
 if __name__=='__main__':
     bz=LiuYue()
-    bz.export_liuyue_xlsx('王',2022,'m',1988,8,16,19,10,zishi=0,real_sun_time='yes',longtitude=120,dy_mode='old',out_dir='e:/temp/ejj/客户流年',show_mode='save')
+    bz.export_liuyue_xlsx('王懿彭',2023,'m',1988,8,16,19,10,zishi=0,real_sun_time='yes',birth_place='',longtitude=113,dy_mode='old',out_dir='e:/temp/ejj/客户流年',show_mode='save')
 
     # mybz=bz.bz_liuyue(2023,'m',1980,5,23,2,10)
     # test=res['this_year_liuyue'][0]

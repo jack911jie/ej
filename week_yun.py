@@ -35,6 +35,7 @@ class WeekYun:
         df_cmt=self.read_day_cmt(xls=xls)
         day_cmt=df_cmt[df_cmt['日期']==datetime.strptime(date_input,'%Y%m%d')].copy(deep=True)
         dategz=ganzhi.GanZhi().cal_dateGZ(int(date_input[:4]),int(date_input[4:6]),int(date_input[6:]),8,0)['bazi']
+  
         gz=''.join(dategz)
         day_cmt['日期干支']=gz[:2]+'年'+gz[2:4]+'月'+gz[4:6]+'日'
         return day_cmt
@@ -51,14 +52,15 @@ class WeekYun:
         df['描述']=daycmt[wx+'描述']
         df['五行']=wx
 
+        
         #色系图地址
         # print(df['颜色'].tolist()[0])
         # print(map(sorted,df['颜色'].tolist()[0]))
+   
         color_list=[]
         for color in os.listdir(os.path.join(self.work_dir,'素材','色系图')):
             if color[-3:].lower()=='png':
                 clr_name=color.split('_')[0]
-                # if ''.join(sorted(clr_name))==list(map(sorted,df['颜色'].tolist()[0]))
                 if ''.join(sorted(clr_name))==df['颜色'].tolist()[0]:
                     color_list.append(color)
         
