@@ -143,12 +143,19 @@ class ExportImage(WeekYun):
             return clist['灰']
 
     def wx_color(self,wx):
+        # wxlist={
+        #     '木':'#99A16D',
+        #     '火':'#DB3D29',
+        #     '土':'#AB896E',
+        #     '金':'#EEE1B1',
+        #     '水':'#36475C'
+        # }
         wxlist={
-            '木':'#99A16D',
-            '火':'#DB3D29',
-            '土':'#AB896E',
-            '金':'#EEE1B1',
-            '水':'#36475C'
+            '木':'#91d697',
+            '火':'#fb738c',
+            '土':'#a77771',
+            '金':'#FFDA1B',
+            '水':'#00ABE5'
         }
         return wxlist[wx]
 
