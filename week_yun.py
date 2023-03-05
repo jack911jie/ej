@@ -339,7 +339,7 @@ class ExportWeekYunTxt(WeekYun):
         df['五行']=wx
         wxtitle=wx+'宝宝'
 
-        title=datetime.strftime(df['日期'].tolist()[0],'%Y年%m月%d日')+'（星期'+df['星期'].tolist()[0]+'）运势|穿搭配色\n\n'+self.wx_icon('日历')+ \
+        title='【伊姐运程】'+datetime.strftime(df['日期'].tolist()[0],'%Y年%m月%d日')+'（星期'+df['星期'].tolist()[0]+'）运势|穿搭配色\n\n'+self.wx_icon('日历')+ \
                                 '  '+df['日期干支'].tolist()[0]+'\n'
 
         wxtxt=self.wx_icon(wx=wx)+'  '+wxtitle+clr_txt+dec_txt+'\n'+df['描述'].tolist()[0]
