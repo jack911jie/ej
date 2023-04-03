@@ -48,7 +48,7 @@ class WeekYun:
         df['星期']=daycmt['星期']
         df['日期干支']=daycmt['日期干支']
         df['颜色']=daycmt[wx+'颜色'].str.replace(r'[，,、]','',regex=True)
-        df['颜色']=df['颜色'].apply(lambda x:''.join(sorted(x)))
+        df['颜色']=df['颜色'].apply(lambda x:''.join(sorted(x.strip())))
         df['描述']=daycmt[wx+'描述']
         df['五行']=wx
 
@@ -63,7 +63,7 @@ class WeekYun:
                 clr_name=color.split('_')[0]
                 if ''.join(sorted(clr_name))==df['颜色'].tolist()[0]:
                     color_list.append(color)
-        
+        # print(color_list) 
         try:
             _pick_color=random.choice(color_list)
         except IndexError:
@@ -430,9 +430,9 @@ if __name__=='__main__':
 
 
     p=ExportImage()
-    res=p.draw_img(date_input='20220828',wx='木',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
-    res.show()
-    res=p.batch_deal(prd=['20220912','20220913'],out_put_dir='e:\\temp\\ejj\日穿搭',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
+    # res=p.draw_img(date_input='20220828',wx='木',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
+    # res.show()
+    res=p.batch_deal(prd=['20230404','20230404'],out_put_dir='e:\\temp\\ejj\日穿搭',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
     # print(res)
   
 
