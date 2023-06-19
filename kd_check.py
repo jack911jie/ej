@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
+import format_transfer
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -99,6 +102,55 @@ class FruitKd:
         #     self.driver.quit()
 
         return result
+
+    def guoyuan_xlsx_style(self,xls):
+            wb=openpyxl.load_workbook(xls)
+            ws=wb.active
+
+            # for cell in ws[1]:
+                
+            #     font=Font(size=13,bold=True)
+            #     cell.font=font
+
+            font=Font(size=13,bold=True)
+            ws['A1'].font=font
+
+            for cls in ['A','B','C','D','F','G','H','I']:
+                cell=ws[cls+'1']
+                font=Font(color='FF0000',bold=True)
+                cell.font=font
+
+            
+            #调整列宽
+            for cell in ws[1]:
+                max_length = 0
+                column_letter = get_column_letter(cell.column)
+                # print(column_letter,cell.value)
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+
+                if column_letter=='J':
+                    adjusted_width = (max_length + 15) * 2.2
+                else:
+                    adjusted_width = (max_length + 5) * 1.2
+                ws.column_dimensions[column_letter].width = adjusted_width
+            
+            wb.save(xls)
+            print('修改格式完成')
+
+    def guige_to_filename(self,dict):
+        df_gp=dict.groupby(['规格'])
+        df_gp_counts=df_gp.count()
+        fn_dict=pd.DataFrame(df_gp_counts['数量']).reset_index().set_index('规格')['数量'].to_dict()
+        fn_out=''
+        #将规格中的阿拉伯数字转为中文
+        for key,value in fn_dict.items():
+            fn_out+=format_transfer.number_to_chinese(int(key[:-2]))+key[-2:]+str(value)+'件 '
+        fn_out=fn_out.strip()
+        return fn_out
 
     def many_or_single_result(self,res,phn):
         soup=BeautifulSoup(res,'html.parser')
@@ -263,57 +315,21 @@ class FruitKd:
             df_order_out['数量']=df_order_out['品名'].apply(lambda x: int(str(x).split('+')[-1]))
             df_res=df_order_out
 
+        fn_out=self.guige_to_filename(df_res)
 
         # print(df_repeated)
         if exp=='yes':
             xlsname=dl_xls.split('\\')[-1].split('.')[0].split('-')
             datetxt,num=xlsname[0],xlsname[2]
-            fn='团团好果'+datetxt[4:6]+'.'+datetxt[6:]+'订单'+'-'+num+'.xlsx'
-            fn=os.path.join(output_dir,fn)
-            df_res.to_excel(fn,index=False)
-            print('导出完成')
-            self.guoyuan_xlsx_style(xls=fn)
+            fn='团团好果'+datetxt[4:6]+'.'+datetxt[6:]+'订单'+'-'+fn_out+'.xlsx'
+            dir_fn=os.path.join(output_dir,fn)
+            df_res.to_excel(dir_fn,index=False)
+            print('{} 导出完成'.format(fn))
+            self.guoyuan_xlsx_style(xls=dir_fn)
             os.startfile(output_dir)
         return df_res
 
-    def guoyuan_xlsx_style(self,xls):
-        wb=openpyxl.load_workbook(xls)
-        ws=wb.active
-
-        # for cell in ws[1]:
-            
-        #     font=Font(size=13,bold=True)
-        #     cell.font=font
-
-        font=Font(size=13,bold=True)
-        ws['A1'].font=font
-
-        for cls in ['A','B','C','D','F','G','H','I']:
-            cell=ws[cls+'1']
-            font=Font(color='FF0000',bold=True)
-            cell.font=font
-
-        
-        #调整列宽
-        for cell in ws[1]:
-            max_length = 0
-            column_letter = get_column_letter(cell.column)
-            # print(column_letter,cell.value)
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(cell.value)
-            except:
-                pass
-
-            if column_letter=='J':
-                adjusted_width = (max_length + 15) * 2.2
-            else:
-                adjusted_width = (max_length + 5) * 1.2
-            ws.column_dimensions[column_letter].width = adjusted_width
-        
-        wb.save(xls)
-        print('修改格式完成')
-
+ 
     def multi_order_to_guoyuan(self,date=20230618,input_dir='E:\\temp\\ejj\\团购群\\订单',output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',expand_accounts='yes',save_each_exp='no'):
         date=str(date)
         try:
@@ -330,11 +346,14 @@ class FruitKd:
 
             df_concat=pd.concat(dfs)
 
-            fn='团团好果'+date[4:6]+'.'+date[6:]+'订单（'+str(len(fns))+'个订单合并）.xlsx'
-            fn=os.path.join(output_dir,fn)
-            df_concat.to_excel(fn,index=False)
-            print('导出完成')
-            self.guoyuan_xlsx_style(xls=fn)
+            fn_out=self.guige_to_filename(df_concat)
+
+
+            fn='团团好果'+date[4:6]+'.'+date[6:]+'订单（'+str(len(fns))+'个订单合并）-'+fn_out+'.xlsx'
+            dir_fn=os.path.join(output_dir,fn)
+            df_concat.to_excel(dir_fn,index=False)
+            print('{} 导出完成'.format(fn))
+            self.guoyuan_xlsx_style(xls=dir_fn)
             os.startfile(output_dir)
 
             return df_concat
@@ -402,13 +421,15 @@ if __name__=='__main__':
  
     # 一、从快团团批量导入订单处理后生成给果园的订单。只能处理一个文件。
     p=FruitKd(chromedriver_path='')
-    # rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230618-导出订单-02.xlsx',
-    #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
-    #                             expand_accounts='yes')
+    rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
+                                output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+                                expand_accounts='yes',
+                                exp='yes')
     #参数说明：
     # dl_xls：从快团团批量导出的订单，文件名修改为：20230618-导出订单-02.xlsx 的格式
     # output_dir：生成给果园的订单文件后存放的文件夹
     # expand_accounts：对于购买多于1件的商品，根据实际数量生成相应的记录。例如同一客户购买了3件，同一条记录生成3条，防止商家发货漏单。
+    # exp：是否显示信息。（在多单导入时建议no，否则会显示很多信息）
     # print(rs)
 
     #批量处理同一天的不同订单，可将多个订单生成一个合并发货清单文件给果园。
@@ -426,13 +447,13 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
-                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-                            url='http://kd.dh.cx/df66d',
-                            kd_name='申通快递',
-                            method='download')
-    print(res)
+    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
+    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+    #                         url='http://kd.dh.cx/df66d',
+    #                         kd_name='申通快递',
+    #                         method='download')
+    # print(res)
 
     #参数说明：
     # input_xls：从快团团导出的待回传清单
