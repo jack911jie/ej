@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 # 创建Chrome选项
 chrome_options = Options()
 chrome_options.add_argument('--headless')  # 设置为无界面模式
@@ -22,7 +23,8 @@ import numpy as np
 class FruitKd:
     def __init__(self,chromedriver_path):
         if chromedriver_path:
-            self.driver=webdriver.Chrome(chromedriver_path)
+            selenium_service = Service(chromedriver_path)
+            self.driver=webdriver.Chrome(service=selenium_service)
         else:
             pass
 
@@ -349,29 +351,43 @@ class FruitKd:
         if method=='download':
             #根据method值获取输入表内容
             df_input=pd.read_excel(input_xls)
+            title=df_input.columns.tolist()
+
+            #有的时候下载的表格中，列名 物流单号（必填）的括号格式每次不一样，故从下载的表格中提取这个列名，以保证改名或合并时不出错。
+            wuliudh_txt=title[2]
             #生成客户手机及姓名列表
             exp_list=self.read_dl_order_excel(xls=input_xls)
             #获取客户物流单号
             res=self.batch_phone_number(phn_name_list=exp_list,url=url)
             
-            df_write=pd.DataFrame(data=res,columns=['收件人手机','收件人姓名','物流单号'])
+            df_write=pd.DataFrame(data=res,columns=['联系电话','收货人',wuliudh_txt])
 
             print('\n\n------------------------\n以下为匹配结果：\n',df_write)
-            df_kd=df_write.dropna(how='any',subset=['物流单号'])
+            df_kd=df_write.dropna(how='any',subset=[wuliudh_txt])
 
             #如无快递单号的df
             if df_kd.shape[0]==0:
                 return '未返回有效快递单号'
                 # pass                
             else:
-                df_input['物流公司（必填）']=kd_name
-                kd_id_dic=df_kd.set_index('收件人手机')['物流单号'].to_dict()
-                df_input['物流单号（必填）']=df_input['联系电话'].apply(lambda x:kd_id_dic.get(str(x),''))
+                # df_input['物流公司（必填）']=kd_name
+                # kd_id_dic=df_kd.set_index('收件人手机')['物流单号'].to_dict()
+                # df_input['物流单号（必填）']=df_input['联系电话'].apply(lambda x:kd_id_dic.get(str(x),''))
+                # df_kd.rename(columns={'收件人手机':'联系电话','收件人姓名':'收货人','物流单号':'物流单号（必填）'},inplace=True)
+
+                df_input['联系电话']=df_input['联系电话'].apply(lambda x: str(x))
+                df_tmp=df_input.copy()
+                df_tmp=pd.merge(df_kd,df_input,on =['收货人','联系电话'],how='outer')
+                # print(df_input)
+                df_tmp.drop(wuliudh_txt+'_y',axis=1,inplace=True)
+                df_tmp.rename(columns={wuliudh_txt+'_x':wuliudh_txt},inplace=True)
 
                 if not os.path.exists(out_dir):
                     os.makedirs(out_dir)
                 out_fn=os.path.join(out_dir,input_xls.split('\\')[-1][:-5]+'-已写入物流单号待上传.xlsx')
-                df_input.to_excel(out_fn,index=False)
+                # print(df_tmp)
+                df_tmp=df_tmp[title]
+                df_tmp.to_excel(out_fn,index=False)
 
                 os.startfile(out_dir)
                 return '\n写入待回传文件完成'
@@ -396,11 +412,11 @@ if __name__=='__main__':
     # print(rs)
 
     #批量处理同一天的不同订单，可将多个订单生成一个合并发货清单文件给果园。
-    rs=p.multi_order_to_guoyuan(date=20230622,
-                                input_dir='E:\\temp\\ejj\\团购群\\订单',
-                                output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
-                                expand_accounts='yes',
-                                save_each_exp='no')
+    # rs=p.multi_order_to_guoyuan(date=20230622,
+    #                             input_dir='E:\\temp\\ejj\\团购群\\订单',
+    #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+    #                             expand_accounts='yes',
+    #                             save_each_exp='no')
 
     #参数说明：
     # dl_xls：从快团团批量导出的订单，文件名修改为：20230618-导出订单-02.xlsx 的格式
@@ -410,13 +426,13 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_45.xlsx.xlsx',
-    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-    #                         url='http://kd.dh.cx/df66d',
-    #                         kd_name='申通快递',
-    #                         method='download')
-    # print(res)
+    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
+                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+                            url='http://kd.dh.cx/df66d',
+                            kd_name='申通快递',
+                            method='download')
+    print(res)
 
     #参数说明：
     # input_xls：从快团团导出的待回传清单
