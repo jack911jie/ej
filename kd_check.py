@@ -370,7 +370,7 @@ class FruitKd:
                 return '未返回有效快递单号'
                 # pass                
             else:
-                # df_input['物流公司（必填）']=kd_name
+                df_input['物流公司（必填）']=kd_name
                 # kd_id_dic=df_kd.set_index('收件人手机')['物流单号'].to_dict()
                 # df_input['物流单号（必填）']=df_input['联系电话'].apply(lambda x:kd_id_dic.get(str(x),''))
                 # df_kd.rename(columns={'收件人手机':'联系电话','收件人姓名':'收货人','物流单号':'物流单号（必填）'},inplace=True)
