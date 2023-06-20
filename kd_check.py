@@ -382,7 +382,7 @@ class FruitKd:
             df_write=pd.DataFrame(data=res,columns=['联系电话','收货人',wuliudh_txt])
 
             #匹配结果去重
-            print(df_write)
+            # print(df_write)
             df_write.drop_duplicates(subset=['联系电话','收货人',wuliudh_txt],inplace=True)
 
             print('\n\n------------------------\n以下为匹配结果：\n',df_write)
