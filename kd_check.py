@@ -381,8 +381,14 @@ class FruitKd:
             
             df_write=pd.DataFrame(data=res,columns=['联系电话','收货人',wuliudh_txt])
 
+            #匹配结果去重
+            print(df_write)
+            df_write.drop_duplicates(subset=['联系电话','收货人',wuliudh_txt],inplace=True)
+
             print('\n\n------------------------\n以下为匹配结果：\n',df_write)
             df_kd=df_write.dropna(how='any',subset=[wuliudh_txt])
+
+            
 
             #如无快递单号的df
             if df_kd.shape[0]==0:
@@ -420,11 +426,11 @@ if __name__=='__main__':
     
  
     # 一、从快团团批量导入订单处理后生成给果园的订单。只能处理一个文件。
-    p=FruitKd(chromedriver_path='')
-    rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
-                                output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
-                                expand_accounts='yes',
-                                exp='yes')
+    # p=FruitKd(chromedriver_path='')
+    # rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
+    #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+    #                             expand_accounts='yes',
+    #                             exp='yes')
     #参数说明：
     # dl_xls：从快团团批量导出的订单，文件名修改为：20230618-导出订单-02.xlsx 的格式
     # output_dir：生成给果园的订单文件后存放的文件夹
@@ -447,12 +453,12 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
-    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-    #                         url='http://kd.dh.cx/df66d',
-    #                         kd_name='申通快递',
-    #                         method='download')
+    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
+                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+                            url='http://kd.dh.cx/df66d',
+                            kd_name='申通快递',
+                            method='download')
     # print(res)
 
     #参数说明：
