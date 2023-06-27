@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import format_transfer
+import read_config
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -280,7 +281,9 @@ class FruitKd:
 
         return df_dl_order_new['联系电话收货人'].tolist()
 
-    def order_to_guoyuan(self,dl_xls='E:\\temp\\ejj\\团购群\\订单\\0614导出.xlsx',output_dir='e:\\temp\\ejj\\团购群\\给果园的订单',expand_accounts='yes',exp='yes'):
+    def order_to_guoyuan(self,dl_xls='E:\\temp\\ejj\\团购群\\订单\\0614导出.xlsx',output_dir='e:\\temp\\ejj\\团购群\\给果园的订单',
+                        check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
+                        expand_accounts='yes',exp='yes'):
         df_order=pd.read_excel(dl_xls,sheet_name='订单列表')
         df_order_out=df_order.copy()
         df_order_out=df_order_out[['收货人','联系电话','详细地址','商品','订单号']]
@@ -299,12 +302,17 @@ class FruitKd:
         # df_order_out['规格']=''
         
         
+        
         df_order_out['备注']=''
         df_order_out['代收金额']=''
         df_order_out['到付金额']=''
 
-        df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
 
+        df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
+        if check_ice_bag=='yes':
+            df_order_out['冰袋数量']=df_order_out['收件人地址'].apply(lambda x: self.ice_bag_number(x,ice_bag_fn=ice_bag_fn))
+            df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','冰袋数量','备注','订单号','代收金额','到付金额']]
+ 
       
         if expand_accounts=='yes':
             df_repeated=df_order_out.loc[df_order_out.index.repeat(df_order_out['数量'])]
@@ -329,8 +337,9 @@ class FruitKd:
             os.startfile(output_dir)
         return df_res
 
- 
-    def multi_order_to_guoyuan(self,date=20230618,input_dir='E:\\temp\\ejj\\团购群\\订单',output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',expand_accounts='yes',save_each_exp='no'):
+    def multi_order_to_guoyuan(self,date=20230618,input_dir='E:\\temp\\ejj\\团购群\\订单',output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+                                check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
+                                expand_accounts='yes',save_each_exp='no'):
         date=str(date)
         try:
             fns=[]
@@ -340,7 +349,8 @@ class FruitKd:
 
             dfs=[]
             for fn in fns:
-                df_res=self.order_to_guoyuan(dl_xls=fn,output_dir=output_dir,expand_accounts=expand_accounts,exp=save_each_exp)
+                df_res=self.order_to_guoyuan(dl_xls=fn,output_dir=output_dir,check_ice_bag=check_ice_bag,ice_bag_fn=ice_bag_fn,
+                                            expand_accounts=expand_accounts,exp=save_each_exp)
                 if df_res.shape[0]>0:
                     dfs.append(df_res)
 
@@ -360,7 +370,6 @@ class FruitKd:
 
         except Exception as e:
             print(e)
-
 
     def write_xlsx_back_kd(self,input_xls='e:\\temp\\ejj\\团购群\\订单\\给果园的订单\\团团好果06.17订单-01.xlsx',
                             out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
@@ -421,16 +430,30 @@ class FruitKd:
             pass
 
         self.close_chrome_driver()
-        
+
+    def ice_bag_number(self,addr,ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config'):
+        ice_bag=2
+        if ice_bag_fn:
+            provinces=read_config.read_json(fn=ice_bag_fn)
+            for pro in provinces['one_icebag']:
+                if pro in addr:
+                    ice_bag=1
+                    break
+
+        return ice_bag
+
+
+
 if __name__=='__main__':
     
  
     # 一、从快团团批量导入订单处理后生成给果园的订单。只能处理一个文件。
-    # p=FruitKd(chromedriver_path='')
-    # rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
-    #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
-    #                             expand_accounts='yes',
-    #                             exp='yes')
+    p=FruitKd(chromedriver_path='')
+    rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
+                                output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+                                check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
+                                expand_accounts='yes',
+                                exp='yes')
     #参数说明：
     # dl_xls：从快团团批量导出的订单，文件名修改为：20230618-导出订单-02.xlsx 的格式
     # output_dir：生成给果园的订单文件后存放的文件夹
@@ -442,6 +465,7 @@ if __name__=='__main__':
     # rs=p.multi_order_to_guoyuan(date=20230622,
     #                             input_dir='E:\\temp\\ejj\\团购群\\订单',
     #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+    #                             check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
     #                             expand_accounts='yes',
     #                             save_each_exp='no')
 
@@ -453,12 +477,12 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
-                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-                            url='http://kd.dh.cx/df66d',
-                            kd_name='申通快递',
-                            method='download')
+    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
+    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+    #                         url='http://kd.dh.cx/df66d',
+    #                         kd_name='申通快递',
+    #                         method='download')
     # print(res)
 
     #参数说明：
