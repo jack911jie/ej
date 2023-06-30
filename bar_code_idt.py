@@ -1,18 +1,21 @@
 import os
 import cv2
 import pyzbar.pyzbar as pyzbar
-import numpy
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import re
 
 class BarCode:
 
 
-    def decodeDisplay(self,img_path):
-        
-        img_data = cv2.imread(img_path)
+    def decodeDisplay(self,img_path):        
+        # img_data = cv2.imread(decoded_path) #如路径中有中文，则报错。应用下一句：
+        img_data=cv2.imdecode(np.fromfile(img_path,dtype=np.uint8),-1)
         # 转为灰度图像
         gray = cv2.cvtColor(img_data, cv2.COLOR_BGR2GRAY)
+        
+
+        
         barcodes = pyzbar.decode(gray)
 
         res=[]
@@ -83,6 +86,6 @@ class BarCode:
 if __name__ == '__main__':
     p=BarCode()
     # decodeDisplay("e:\\temp\\temp_ejj\\01bar.jpg")
-    res=p.batch_identify('e:\\temp\\temp_ejj')
+    res=p.batch_identify('E:\\temp\\ejj\\团购群\\快递')
     res=p.exp_res(res)
     print(res)
