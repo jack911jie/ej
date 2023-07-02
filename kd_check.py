@@ -289,7 +289,7 @@ class FruitKd:
                         expand_accounts='yes',exp='yes'):
         df_order=pd.read_excel(dl_xls,sheet_name='订单列表')
         df_order_out=df_order.copy()
-        df_order_out=df_order_out[['收货人','联系电话','详细地址','商品','订单号']]
+        df_order_out=df_order_out[['收货人','联系电话','详细地址','商品','订单号','订单金额']]
         df_order_out.rename(columns={'收货人':'收件人姓名','联系电话':'收件人手机','详细地址':'收件人地址','商品':'品名'},inplace=True)
         df_order_out['收件人手机']=df_order_out['收件人手机'].apply(lambda x: str(x))
         df_order_out['规格']=df_order_out['品名'].apply(lambda x: re.findall(r'(\d\d斤装|\d斤装)',x)[0])
@@ -318,7 +318,7 @@ class FruitKd:
     
         # print(df_order_out['规格和地址'].str.split('%'))
 
-        df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额','规格和地址']]
+        df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额','规格和地址','订单金额']]
         if check_ice_bag=='yes':
             # df_order_out['冰袋数量']=df_order_out['规格和地址'].apply(lambda x: self.ice_bag_number(addr=x.split('%')[1],spec=x.str.split('%')[0],ice_bag_fn=ice_bag_fn))
             df_order_out['冰袋数量']=df_order_out['规格和地址'].apply(lambda x: self.ice_bag_number_df(addr_spec=x,ice_bag_fn=ice_bag_fn))
@@ -329,6 +329,11 @@ class FruitKd:
             df_repeated=df_order_out.loc[df_order_out.index.repeat(df_order_out['数量'])]
             df_repeated=df_repeated.reset_index(drop=True)
             df_repeated['数量']=1
+
+            df_repeated['重复订单']=df_repeated.duplicated(subset='订单号',keep='first')
+            df_repeated.loc[df_repeated['重复订单'],'订单金额']=0
+            df_repeated.drop('重复订单',axis=1,inplace=True)
+
             df_res=df_repeated
         else:
             df_order_out['数量']=df_order_out['品名'].apply(lambda x: int(str(x).split('+')[-1]))
@@ -355,9 +360,9 @@ class FruitKd:
             # df_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
     
         try:
-            result_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','冰袋数量','备注','订单号','代收金额','到付金额']]
+            result_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','冰袋数量','备注','订单号','代收金额','到付金额','订单金额']]
         except:
-            result_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
+            result_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额','订单金额']]
         
         return {'orders':result_res,'total_wt':total_wt}
 
