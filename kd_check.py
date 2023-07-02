@@ -39,13 +39,13 @@ class FruitKd:
         self.driver.quit()
 
     #第一次获取物流记录
-    def connect_kd_web(self,phone_number,url):
+    def connect_kd_web(self,phone_number,url,phn_digits=4):
         # 打开网页
         self.driver.get(url)
         time.sleep(1)
 
         # 设置要输入的号码
-        phone_number_4 = str(phone_number)[-4:] # 替换成你想要的号码
+        phone_number_4 = str(phone_number)[phn_digits*-1:] # 替换成你想要的号码
 
         # 找到收件人输入框并输入号码
         try:
@@ -72,13 +72,13 @@ class FruitKd:
         return result
 
     #如有重复记录的获取方法2
-    def connect_kd_web_2(self,phone_number,url):
+    def connect_kd_web_2(self,phone_number,url,phn_digits):
         # 打开网页
         self.driver.get(url)
         time.sleep(1)
 
         # 设置要输入的号码
-        phone_number_4 = str(phone_number)[-4:] # 替换成你想要的号码
+        phone_number_4 = str(phone_number)[phn_digits*-1:] # 替换成你想要的号码
 
         # 找到收件人输入框并输入号码
         try:
@@ -153,7 +153,7 @@ class FruitKd:
         fn_out=fn_out.strip()
         return fn_out
 
-    def many_or_single_result(self,res,phn):
+    def many_or_single_result(self,res,phn,phn_digits,keyword,ptn):
         soup=BeautifulSoup(res,'html.parser')
 
         if '查询到多条记录' in res:
@@ -172,19 +172,19 @@ class FruitKd:
             ress=[]
             for url in urls:
                 # url=url.split('//')[-1]
-                res=self.connect_kd_web_2(phone_number=phn,url=url)
-                tmp_res=self.deal_result(res=res)
+                res=self.connect_kd_web_2(phone_number=phn,url=url,phn_digits=phn_digits)
+                tmp_res=self.deal_result(res=res,keyword=keyword,ptn=ptn)
                 ress.append(tmp_res[0])
 
             result=ress
         else:
             print('{} 有一条记录'.format(phn))
-            result=self.deal_result(res)
+            result=self.deal_result(res,keyword=keyword,ptn=ptn)
                 
         
         return result
            
-    def deal_result(self,res):
+    def deal_result(self,res,keyword='物流单号',ptn='\d{15}'):
         # 处理结果
         # 这里需要根据具体情况来解析和提取你想要的信息
 
@@ -202,10 +202,11 @@ class FruitKd:
             tt=''
             # 检查li元素的文本内容是否包含目标字符
             try:
-                if '物流单号' in li.get_text():
+                if keyword in li.get_text():
                     # 找到了包含目标字符的li元素
                     kd_code_txt=li
-                    code=re.findall(r'\d{15}',str(li.text))[0]
+                    code=re.findall(ptn,str(li.text))[0]
+                    # code=re.findall(ptn,str(li.text))
                     tt=tt+code
             
     
@@ -220,7 +221,8 @@ class FruitKd:
 
                 if len(tt)>0:
                     info.append(tt)
-            except:
+            except Exception as err_code:
+                print(err_code)
                 pass
         
         info_0=info[0::2]
@@ -232,23 +234,24 @@ class FruitKd:
         result=[]
         for x in range(len(info_0)):
             n_ph={}
-            n_ph[info_1[x]]=info_0[x]
+            n_ph[info_0[x]]=info_1[x] #顺丰用            
+            # n_ph[info_1[x]]=info_0[x] #申通用
             result.append(n_ph)        
 
         return result
 
-    def batch_phone_number(self,phn_name_list=['15678892330阿晓','17853297329李君'],url='http://kd.dh.cx/df66d'):
+    def batch_phone_number(self,phn_name_list=['15678892330阿晓','17853297329李君'],url='http://kd.dh.cx/df66d',page_keyword='单号',phn_digits=4,ptn=r'\d{15}'):
         kd_id_list=[]
         for phn_name in phn_name_list:
             phn=phn_name[:11]
             name=phn_name[11:]
-            id_get=self.connect_kd_web(phone_number=phn,url=url)
+            id_get=self.connect_kd_web(phone_number=phn,url=url,phn_digits=phn_digits)
 
             # print('id_get:',id_get)
             # with open('d:\\py\\test\\res.html', 'r', encoding='utf-8') as fhtml:
             #     id_get = fhtml.read()
             if id_get:
-                kddh=self.many_or_single_result(res=id_get,phn=phn)
+                kddh=self.many_or_single_result(res=id_get,phn=phn,phn_digits=phn_digits,keyword=page_keyword,ptn=ptn)
 
                 # print(kddh)
                 if kddh:
@@ -306,13 +309,21 @@ class FruitKd:
         df_order_out['备注']=''
         df_order_out['代收金额']=''
         df_order_out['到付金额']=''
+        df_order_out['规格和地址']=df_order_out['规格']+'%'+df_order_out['收件人地址']
+        df_order_out['重量小计']=df_order_out['规格'].apply(lambda x: int(x[:-2]))*df_order_out['数量']
 
+        #计算总重量:
+        total_wt=df_order_out['重量小计'].sum()
+        # print(total_wt)
+    
+        # print(df_order_out['规格和地址'].str.split('%'))
 
-        df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
+        df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额','规格和地址']]
         if check_ice_bag=='yes':
-            df_order_out['冰袋数量']=df_order_out['收件人地址'].apply(lambda x: self.ice_bag_number(x,ice_bag_fn=ice_bag_fn))
-            df_order_out=df_order_out[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','冰袋数量','备注','订单号','代收金额','到付金额']]
- 
+            # df_order_out['冰袋数量']=df_order_out['规格和地址'].apply(lambda x: self.ice_bag_number(addr=x.split('%')[1],spec=x.str.split('%')[0],ice_bag_fn=ice_bag_fn))
+            df_order_out['冰袋数量']=df_order_out['规格和地址'].apply(lambda x: self.ice_bag_number_df(addr_spec=x,ice_bag_fn=ice_bag_fn))
+        
+            #row['收件人地址'].apply(lambda x),spec=row['规格'],ice_bag_fn=ice_bag_fn
       
         if expand_accounts=='yes':
             df_repeated=df_order_out.loc[df_order_out.index.repeat(df_order_out['数量'])]
@@ -325,17 +336,30 @@ class FruitKd:
 
         fn_out=self.guige_to_filename(df_res)
 
+        
+
         # print(df_repeated)
+        # exp：显示内容并保存，'yes'参数用于处理单独的一张表，没有多表合并的情况
         if exp=='yes':
             xlsname=dl_xls.split('\\')[-1].split('.')[0].split('-')
             datetxt,num=xlsname[0],xlsname[2]
             fn='团团好果'+datetxt[4:6]+'.'+datetxt[6:]+'订单'+'-'+fn_out+'.xlsx'
             dir_fn=os.path.join(output_dir,fn)
+            df_res=df_res.drop(columns=['规格和地址']) #去掉“规格和地址”再保存
             df_res.to_excel(dir_fn,index=False)
             print('{} 导出完成'.format(fn))
             self.guoyuan_xlsx_style(xls=dir_fn)
             os.startfile(output_dir)
-        return df_res
+        else:
+            df_res=df_res.drop(columns=['规格和地址'])#去掉“规格和地址”再输出
+            # df_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
+    
+        try:
+            result_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','冰袋数量','备注','订单号','代收金额','到付金额']]
+        except:
+            result_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','备注','订单号','代收金额','到付金额']]
+        
+        return {'orders':result_res,'total_wt':total_wt}
 
     def multi_order_to_guoyuan(self,date=20230618,input_dir='E:\\temp\\ejj\\团购群\\订单',output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
                                 check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
@@ -348,11 +372,14 @@ class FruitKd:
                     fns.append(os.path.join(input_dir,fn))
 
             dfs=[]
+            total_wt=0
             for fn in fns:
                 df_res=self.order_to_guoyuan(dl_xls=fn,output_dir=output_dir,check_ice_bag=check_ice_bag,ice_bag_fn=ice_bag_fn,
                                             expand_accounts=expand_accounts,exp=save_each_exp)
-                if df_res.shape[0]>0:
-                    dfs.append(df_res)
+
+                if df_res['orders'].shape[0]>0:
+                    dfs.append(df_res['orders'])
+                    total_wt+=df_res['total_wt']
 
             df_concat=pd.concat(dfs)
 
@@ -360,22 +387,24 @@ class FruitKd:
 
 
             fn='团团好果'+date[4:6]+'.'+date[6:]+'订单（'+str(len(fns))+'个订单合并）-'+fn_out+'.xlsx'
+            wt_txt='（'+str(len(fns))+'个订单一共{}斤）'.format(str(total_wt))
             dir_fn=os.path.join(output_dir,fn)
             df_concat.to_excel(dir_fn,index=False)
-            print('{} 导出完成'.format(fn))
+            print('\n{} 导出完成\n{}'.format(fn,wt_txt))
             self.guoyuan_xlsx_style(xls=dir_fn)
             os.startfile(output_dir)
 
             return df_concat
 
         except Exception as e:
-            print(e)
+            print('错误：',e)
 
     def write_xlsx_back_kd(self,input_xls='e:\\temp\\ejj\\团购群\\订单\\给果园的订单\\团团好果06.17订单-01.xlsx',
                             out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
                             url='http://kd.dh.cx/df66d',
                             kd_name='申通快递',
-                            method='download'):
+                            method='download',
+                            page_keyword='单号',phn_digits=4,ptn=r'\d{15}'):
         if method=='download':
             #根据method值获取输入表内容
             df_input=pd.read_excel(input_xls)
@@ -386,7 +415,7 @@ class FruitKd:
             #生成客户手机及姓名列表
             exp_list=self.read_dl_order_excel(xls=input_xls)
             #获取客户物流单号
-            res=self.batch_phone_number(phn_name_list=exp_list,url=url)
+            res=self.batch_phone_number(phn_name_list=exp_list,url=url,page_keyword=page_keyword,phn_digits=phn_digits,ptn=ptn)
             
             df_write=pd.DataFrame(data=res,columns=['联系电话','收货人',wuliudh_txt])
 
@@ -431,14 +460,32 @@ class FruitKd:
 
         self.close_chrome_driver()
 
-    def ice_bag_number(self,addr,ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config'):
+    def ice_bag_number(self,addr,spec,ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config'):
         ice_bag=2
         if ice_bag_fn:
             provinces=read_config.read_json(fn=ice_bag_fn)
             for pro in provinces['one_icebag']:
-                if pro in addr:
+                # if pro in addr:
+                if re.match('^'+pro+'.*',addr) and spec=='10斤装':
                     ice_bag=1
                     break
+
+        return ice_bag
+
+    def ice_bag_number_df(self,addr_spec,ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config'):
+        ice_bag=2
+        spec,addr=addr_spec.split('%')
+
+        if ice_bag_fn:
+            provinces=read_config.read_json(fn=ice_bag_fn)
+            for pro in provinces['one_icebag']:
+                # if pro in addr:
+                if re.match('^'+pro+'.*',addr):
+                    ice_bag=1
+                    break
+
+        if spec=='5斤装':
+            ice_bag=1
 
         return ice_bag
 
@@ -446,14 +493,22 @@ class FruitKd:
 
 if __name__=='__main__':
     
+    ##测试版块
+    #顺丰：快递单号 r'SF\d{13}'
+    #申通：物流单号 r'\d{15}'
+    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    # res=p.batch_phone_number(phn_name_list=['18701585003项小菊'],url='http://kd.dh.cx/36cd9',page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
+    # # res=p.batch_phone_number(phn_name_list=['17853297329李君'],url='http://kd.dh.cx/df66d',page_keyword='物流单号',phn_digits=4,ptn=r'\d{15}')
+    # print(res)
+
  
     # 一、从快团团批量导入订单处理后生成给果园的订单。只能处理一个文件。
-    p=FruitKd(chromedriver_path='')
-    rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
-                                output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
-                                check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
-                                expand_accounts='yes',
-                                exp='yes')
+    # p=FruitKd(chromedriver_path='')
+    # rs=p.order_to_guoyuan(dl_xls='E:\\temp\\ejj\\团购群\\订单\\20230619-导出订单-02.xlsx',
+    #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+    #                             check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
+    #                             expand_accounts='yes',
+    #                             exp='yes')
     #参数说明：
     # dl_xls：从快团团批量导出的订单，文件名修改为：20230618-导出订单-02.xlsx 的格式
     # output_dir：生成给果园的订单文件后存放的文件夹
@@ -462,7 +517,8 @@ if __name__=='__main__':
     # print(rs)
 
     #批量处理同一天的不同订单，可将多个订单生成一个合并发货清单文件给果园。
-    # rs=p.multi_order_to_guoyuan(date=20230622,
+    # p=FruitKd(chromedriver_path='')
+    # rs=p.multi_order_to_guoyuan(date=20230630,
     #                             input_dir='E:\\temp\\ejj\\团购群\\订单',
     #                             output_dir='e:\\temp\\ejj\\团购群\\订单\\给果园的订单',
     #                             check_ice_bag='yes',ice_bag_fn='d:\\py\\ej\\configs\\ktt_ice_bag.config',
@@ -477,12 +533,13 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-06-17 21_27_48.xlsx.xlsx',
-    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-    #                         url='http://kd.dh.cx/df66d',
-    #                         kd_name='申通快递',
-    #                         method='download')
+    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-07-02 18_13_50.xlsx.xlsx',
+                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+                            url='http://kd.dh.cx/36cd9',
+                            kd_name='顺丰快递',
+                            method='download',
+                            page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
     # print(res)
 
     #参数说明：
@@ -491,6 +548,7 @@ if __name__=='__main__':
     # url：查询地址，可能会经常改变
     # kd_name: 快递公司名称。写入生成的回传清单中。
     # method: download——从快团团导出的待回传清单文件查询物流单号并生成回传文件以上传。目前仅支持这一选项。
+    # 其他：申通查询http://kd.dh.cx/df66d，用手机号后4位，顺丰查询http://kd.dh.cx/36cd9，用整个手机号11位
 
 
 
