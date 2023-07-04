@@ -153,19 +153,24 @@ class FruitKd:
         fn_out=fn_out.strip()
         return fn_out
 
-    def many_or_single_result(self,res,phn,phn_digits,keyword,ptn):
+    def many_or_single_result(self,res,phn,phn_digits,check_date,keyword,ptn):
         soup=BeautifulSoup(res,'html.parser')
 
         if '查询到多条记录' in res:
-            print('{} 有多条记录，正在匹配姓名。'.format(phn))
+            print('{} 有多条记录，正在匹配日期及姓名。'.format(phn))
+            # if '顺丰' in kd_name:
+            check_date=str(check_date)
+            date_txt=check_date[4:6]+'月'+check_date[6:]+'日'
+
             li_elements = soup.select('li[role="presentation"]')
             # <li role="presentation" class="active"><a href="http://kd.dh.cx/df66d/7329/0"> 06月16日（单号：776260474339358） </a></li>
             urls=[]
             for li in li_elements:
                 a_tag=li.find('a')
                 if a_tag:
-                    url=a_tag['href']
-                    urls.append(url)
+                    if date_txt in a_tag.text:
+                        url=a_tag['href']                    
+                        urls.append(url)
             
             # print(urls)
 
@@ -240,7 +245,7 @@ class FruitKd:
 
         return result
 
-    def batch_phone_number(self,phn_name_list=['15678892330阿晓','17853297329李君'],url='http://kd.dh.cx/df66d',page_keyword='单号',phn_digits=4,ptn=r'\d{15}'):
+    def batch_phone_number(self,phn_name_list=['15678892330阿晓','17853297329李君'],url='http://kd.dh.cx/df66d',check_date=20230703,page_keyword='单号',phn_digits=4,ptn=r'\d{15}'):
         kd_id_list=[]
         for phn_name in phn_name_list:
             phn=phn_name[:11]
@@ -251,7 +256,7 @@ class FruitKd:
             # with open('d:\\py\\test\\res.html', 'r', encoding='utf-8') as fhtml:
             #     id_get = fhtml.read()
             if id_get:
-                kddh=self.many_or_single_result(res=id_get,phn=phn,phn_digits=phn_digits,keyword=page_keyword,ptn=ptn)
+                kddh=self.many_or_single_result(res=id_get,phn=phn,phn_digits=phn_digits,check_date=check_date,keyword=page_keyword,ptn=ptn)
 
                 # print(kddh)
                 if kddh:
@@ -408,6 +413,7 @@ class FruitKd:
                             out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
                             url='http://kd.dh.cx/df66d',
                             kd_name='申通快递',
+                            check_date=20230703,
                             method='download',
                             page_keyword='单号',phn_digits=4,ptn=r'\d{15}'):
         if method=='download':
@@ -420,7 +426,7 @@ class FruitKd:
             #生成客户手机及姓名列表
             exp_list=self.read_dl_order_excel(xls=input_xls)
             #获取客户物流单号
-            res=self.batch_phone_number(phn_name_list=exp_list,url=url,page_keyword=page_keyword,phn_digits=phn_digits,ptn=ptn)
+            res=self.batch_phone_number(phn_name_list=exp_list,url=url,check_date=check_date,page_keyword=page_keyword,phn_digits=phn_digits,ptn=ptn)
             
             df_write=pd.DataFrame(data=res,columns=['联系电话','收货人',wuliudh_txt])
 
@@ -449,6 +455,7 @@ class FruitKd:
                 # print(df_input)
                 df_tmp.drop(wuliudh_txt+'_y',axis=1,inplace=True)
                 df_tmp.rename(columns={wuliudh_txt+'_x':wuliudh_txt},inplace=True)
+                df_tmp.drop_duplicates(subset=['收货人','联系电话','物流单号（必填）'],inplace=True)
 
                 if not os.path.exists(out_dir):
                     os.makedirs(out_dir)
@@ -501,10 +508,10 @@ if __name__=='__main__':
     ##测试版块
     #顺丰：快递单号 r'SF\d{13}'
     #申通：物流单号 r'\d{15}'
-    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    # res=p.batch_phone_number(phn_name_list=['18701585003项小菊'],url='http://kd.dh.cx/36cd9',page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
-    # # res=p.batch_phone_number(phn_name_list=['17853297329李君'],url='http://kd.dh.cx/df66d',page_keyword='物流单号',phn_digits=4,ptn=r'\d{15}')
-    # print(res)
+    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    res=p.batch_phone_number(phn_name_list=['13811776353冯勤'],url='http://kd.dh.cx/36cd9',check_date=20230703,page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
+    # res=p.batch_phone_number(phn_name_list=['17853297329李君'],url='http://kd.dh.cx/df66d',page_keyword='物流单号',phn_digits=4,ptn=r'\d{15}')
+    print(res)
 
  
     # 一、从快团团批量导入订单处理后生成给果园的订单。只能处理一个文件。
@@ -538,13 +545,14 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-07-02 18_13_50.xlsx.xlsx',
-                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-                            url='http://kd.dh.cx/36cd9',
-                            kd_name='顺丰快递',
-                            method='download',
-                            page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
+    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-07-02 18_13_50.xlsx.xlsx',
+    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+    #                         url='http://kd.dh.cx/36cd9',
+    #                         check_date=check_date,
+    #                         kd_name='顺丰快递',
+    #                         method='download',
+    #                         page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
     # print(res)
 
     #参数说明：
