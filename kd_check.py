@@ -549,7 +549,7 @@ if __name__=='__main__':
     # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\wuliu2023-07-02 18_13_50.xlsx.xlsx',
     #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
     #                         url='http://kd.dh.cx/36cd9',
-    #                         check_date=check_date,
+    #                         check_date=20230703,
     #                         kd_name='顺丰快递',
     #                         method='download',
     #                         page_keyword='快递单号',phn_digits=11,ptn=r'SF\d{13}')
