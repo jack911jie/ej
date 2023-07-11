@@ -296,8 +296,8 @@ class FruitKd:
                         expand_accounts='yes',exp='yes'):
 
         #检查文件名：
-        if not re.match(r'\d{8}-.*\d{0,3}(斤|两|个)-导出订单-\d\d.xlsx',dl_xls.split('\\')[-1]):
-            exit('文件名格式错误。正确格式类似：20230708-台农10斤-导出订单-01.xlsx')
+        if not re.match(r'\d{8}-.*\d{0,3}(斤|两|个)装-导出订单-\d\d.xlsx',dl_xls.split('\\')[-1]):
+            exit('文件名格式错误。正确格式类似：20230708-台农10斤装-导出订单-01.xlsx')
 
         df_order=pd.read_excel(dl_xls,sheet_name='订单列表')
         df_order_out=df_order.copy()
@@ -545,7 +545,7 @@ if __name__=='__main__':
     #                             expand_accounts='yes',
     #                             exp='yes')
     #参数说明：
-    # dl_xls：从快团团批量导出的订单，文件名为：20230619-台农10斤-导出订单-02.xlsx 的格式
+    # dl_xls：从快团团批量导出的订单，文件名为：20230619-台农10斤装-导出订单-02.xlsx 的格式，校验格式为：\d{8}-.*\d{0,3}(斤|两|个)装-导出订单-\d\d.xlsx
     # output_dir：生成给果园的订单文件后存放的文件夹
     # expand_accounts：对于购买多于1件的商品，根据实际数量生成相应的记录。例如同一客户购买了3件，同一条记录生成3条，防止商家发货漏单。
     # exp：是否显示信息。（在多单导入时建议no，否则会显示很多信息）
