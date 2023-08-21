@@ -346,12 +346,31 @@ class ExportWeekYunTxt(WeekYun):
 
         return [title,wxtxt]
 
-    def all_wx_txt(self,date_input='20220822',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭'):        
+    def all_wx_txt(self,date_input='20220822',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',
+                save_dir='e:\\temp\\ejj\\日穿搭',sense_word_judge='yes'):        
         all_txt=''
         for wx in ['木','火','土','金','水']:
             txts=self.exp_txt(date_input=date_input,wx=wx,xls=xls)
             all_txt+=txts[1]+'\n\n'
         all_txt=txts[0]+'\n'+all_txt
+
+        if sense_word_judge=='yes':
+            print('正在处理敏感词...')
+            with open(os.path.join(self.work_dir,'素材','config','敏感词.txt'),'r',encoding='utf-8') as f:
+                text=f.read()
+            
+            lines=text.split('\n')
+            sensitive_dic={}
+            for line in lines:
+                if line.strip():  # 忽略空行
+                    key, value = line.strip().split(':')
+                    sensitive_dic[key.strip().strip('"')] = value.strip().strip('",')
+
+            for key in sensitive_dic.keys():   
+                if key in all_txt:
+                    all_txt=all_txt.replace(key,sensitive_dic[key])
+                
+
 
         if save=='yes':
             date_dir=date_input[:4]+'-'+date_input[4:6]+'-'+date_input[6:]
@@ -365,7 +384,8 @@ class ExportWeekYunTxt(WeekYun):
         
         return all_txt
     
-    def all_date_wx(self,prd=['20220822','20220828'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭',import_dec_dic=''):
+    def all_date_wx(self,prd=['20220822','20220828'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',
+                    save='yes',save_dir='e:\\temp\\ejj\\日穿搭',sense_word_judge='yes',import_dec_dic=''):
         stime,etime=datetime.strptime(prd[0],'%Y%m%d'),datetime.strptime(prd[1],'%Y%m%d')
         datelist=[]
         while stime<=etime:
@@ -374,7 +394,7 @@ class ExportWeekYunTxt(WeekYun):
         
         for nowtime in datelist:
             print('正在处理 '+nowtime[:4]+'-'+nowtime[4:6]+'-'+nowtime[6:]+' 穿搭配色文案')
-            self.all_wx_txt(date_input=nowtime,xls=xls,save=save,save_dir=save_dir)
+            self.all_wx_txt(date_input=nowtime,xls=xls,save=save,save_dir=save_dir,sense_word_judge=sense_word_judge)
         
         print('完成')
 
