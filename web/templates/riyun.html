@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E姐姐方案生成</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fffbf6">
+    <div id="container" style="display:flex;background-color:#fffbf6 ;text-align: center; justify-content: center; width: 400px;flex-wrap: wrap; ">
+        <div id="date" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 50px;"></div>
+    </div>
+
+    <div><h3>· 选择文件</h3>
+        <label for="date_or_prd">
+            <h4><input type='radio' name="fn" value="1" onclick=hideOrDisplayEndDate() checked> 文件1 <input type='radio' name="date_or_prd" value="2" onclick=hideOrDisplayEndDate()> 文件2</h4>            
+        </label>
+    </div>
+
+    <div><h3>· 选择单日还是多日</h3>
+        <label for="date_or_prd">
+            <h4><input type='radio' name="date_or_prd" value="0" onclick=hideOrDisplayEndDate() checked> 单日 <input type='radio' name="date_or_prd" value="1" onclick=hideOrDisplayEndDate()> 多日</h4>            
+        </label>
+    </div>
+
+    <div><h3><span id="start_date_txt">· 请选择日期</span>  <input id='start_date' type='date' onchange=sameEndDate()></h3></div>    
+    <div id="end_date_block"><h3>· 请选择结束日  <input id='end_date' type='date'></h3></div>
+
+    <hr>
+    <div>
+        <button id="submit" onclick=submit()>生成文案</button>
+    </div>
+
+    <div id="result">
+    </div>
+
+    
+    <script src="../static/js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            showDateandWeekDay();
+            selectToday('start_date','date');
+            selectToday('end_date','date');
+            
+            hideOrDisplayEndDate();
+        })
+    
+    function sameEndDate(){
+        document.getElementById('end_date').value=document.getElementById('start_date').value;
+    }
+
+    function showDateandWeekDay(){
+        const dateBlock=document.getElementById('date');
+            const today=new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            // 获取星期几的数值
+            const dayOfWeek = today.getDay();
+            // 将星期几的数值转换为中文
+            let weekDayChinese = '';
+            switch (dayOfWeek) {
+            case 0:
+                weekDayChinese = '星期日';
+                break;
+            case 1:
+                weekDayChinese = '星期一';
+                break;
+            case 2:
+                weekDayChinese = '星期二';
+                break;
+            case 3:
+                weekDayChinese = '星期三';
+                break;
+            case 4:
+                weekDayChinese = '星期四';
+                break;
+            case 5:
+                weekDayChinese = '星期五';
+                break;
+            case 6:
+                weekDayChinese = '星期六';
+                break;
+            default:
+                weekDayChinese = '未知';
+            }
+            dateDisplay=`${year} 年 ${month} 月 ${day} 日
+                        ${weekDayChinese}`; 
+            dateBlock.innerText=dateDisplay;
+    }
+
+    function hideOrDisplayEndDate(){
+        const dateOrPrd=document.querySelector('input[name="date_or_prd"]:checked').value;
+        const endDateBlock=document.getElementById('end_date_block');
+        const startDateTxt=document.getElementById('start_date_txt');
+
+        // 单日
+        if(dateOrPrd==='0'){            
+            endDateBlock.style.display='None';
+            startDateTxt.innerText='· 请选择日期'
+        // 多日
+        }else{
+            endDateBlock.style.display='block';
+            startDateTxt.innerText='· 请选择起始日'
+        }
+    }
+    
+    function submit(){
+        const startDate=document.getElementById('start_date').value;
+        const endDate=document.getElementById('end_date').value;
+        const fnNum=document.querySelector('input[name="fn"]:checked').value;
+        console.log(startDate,endDate)
+        fetch('/generate_riyun',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    },
+                body:fnNum+'|'+startDate+'|'+endDate
+                })
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data)
+                    fetch('/zip_and_download',{
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text/plain'
+                            },
+                        body:data
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            console.log(data)
+                            
+                        })
+                        .catch(error => console.error('Error:', error));
+
+                })
+                .catch(error => console.error('Error:', error));
+
+    }
+
+        // fetch('/zip_and_download',{
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'text/plain'
+        //             },
+        //         body:'2023-08-22,2023-08-22'
+        //         })
+        //         .then(response => response.text())
+        //         .then(data => {
+        //             console.log(data)
+                    
+        //           })
+        //         .catch(error => console.error('Error:', error));
+
+        //         }
+
+
+    </script>
+</body>
