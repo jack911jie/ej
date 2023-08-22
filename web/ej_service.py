@@ -48,7 +48,7 @@ class EjService(Flask):
         week_pic=week_yun.ExportImage(work_dir=work_dir)
         dec_txt=week_pic.batch_deal(prd=prd,out_put_dir=eachday_output_dir,xls=xls)
 
-        print('\n正在处理每日穿搭配色文案\n')
+        # print('\n正在处理每日穿搭配色文案\n')
         week_txts=week_yun.ExportWeekYunTxt(work_dir=work_dir,import_dec_dic=dec_txt)
         week_txts.all_date_wx(prd=prd,xls=xls,save_dir=eachday_output_dir,sense_word_judge=sense_word_judge)
 

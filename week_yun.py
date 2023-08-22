@@ -272,13 +272,13 @@ class ExportImage(WeekYun):
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             for num,wx in enumerate(['木','火','土','金','水']):
-                print('正在生成 '+date_dir+' '+wx+'  穿搭')
+                # print('正在生成 '+date_dir+' '+wx+'  穿搭')
                 res_img,dec_txt=self.draw_img(date_input=nowtime,wx=wx,xls=xls)
                 save_name=os.path.join(save_dir,str(num+1)+'-'+wx+'.jpg')
                 res_img.save(save_name,quality=95,subsampling=0)
                 out_decs_txt[nowtime][wx]=dec_txt
 
-        print('完成')
+        # print('完成')
 
         return out_decs_txt
 
@@ -355,7 +355,7 @@ class ExportWeekYunTxt(WeekYun):
         all_txt=txts[0]+'\n'+all_txt
 
         if sense_word_judge=='yes':
-            print('正在处理敏感词...')
+            # print('正在处理敏感词...')
             with open(os.path.join(self.work_dir,'素材','config','敏感词.txt'),'r',encoding='utf-8') as f:
                 text=f.read()
             
@@ -393,7 +393,7 @@ class ExportWeekYunTxt(WeekYun):
             stime+=timedelta(days=1)
         
         for nowtime in datelist:
-            print('正在处理 '+nowtime[:4]+'-'+nowtime[4:6]+'-'+nowtime[6:]+' 穿搭配色文案')
+            # print('正在处理 '+nowtime[:4]+'-'+nowtime[4:6]+'-'+nowtime[6:]+' 穿搭配色文案')
             self.all_wx_txt(date_input=nowtime,xls=xls,save=save,save_dir=save_dir,sense_word_judge=sense_word_judge)
         
         print('完成')

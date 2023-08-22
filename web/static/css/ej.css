@@ -27,6 +27,9 @@ h3{
   background: rgb(248, 249, 252);
   color:#5a6ba3
 }
+.prompt{
+  color:#d052bb;
+}
 .cover-button{
   display:table-cell;
   margin-bottom: 15px; 

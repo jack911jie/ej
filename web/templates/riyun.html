@@ -2,13 +2,13 @@
 <html>
 <head>
     <title>E姐姐方案生成</title>
-    <link rel="stylesheet" href="../static/css/minghu.css">
+    <link rel="stylesheet" href="../static/css/ej.css">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="background-color:#fffbf6">
     <div id="container" style="display:flex;background-color:#fffbf6 ;text-align: center; justify-content: center; width: 400px;flex-wrap: wrap; ">
-        <div id="date" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 50px;"></div>
+        <div id="date" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 10px;"></div>
     </div>
 
     <div><h3>· 选择文件</h3>
@@ -31,7 +31,7 @@
         <button id="submit" onclick=submit()>生成文案</button>
     </div>
 
-    <div id="result">
+    <div id="prompt" class="prompt">
     </div>
 
     
@@ -109,6 +109,8 @@
         const startDate=document.getElementById('start_date').value;
         const endDate=document.getElementById('end_date').value;
         const fnNum=document.querySelector('input[name="fn"]:checked').value;
+        const prompt=document.getElementById('prompt')
+        prompt.innerText='正在处理，请等待。'
         console.log(startDate,endDate)
         fetch('/generate_riyun',{
                 method: 'POST',
@@ -130,6 +132,7 @@
                         .then(response => response.text())
                         .then(data => {
                             console.log(data)
+                            prompt.innerText='处理完成，请下载'
                             
                         })
                         .catch(error => console.error('Error:', error));
