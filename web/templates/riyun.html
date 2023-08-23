@@ -34,7 +34,8 @@
     <div id="prompt" class="prompt">
     </div>
 
-    <div id="dl" style="margin-top:10px;display: none;"><a href="{{ url_for('zip_and_download') }}">下载文件</a></div>
+    <!-- <div id="dl" style="margin-top:10px;display: none;"><a href="{{ url_for('zip_and_download') }}">下载文件</a></div> -->
+    <div id="dl" style="margin-top:10px;display: none;" onclick="zip_and_download()">点击下载文件</div>
 
     
     <script src="../static/js/common.js"></script>
@@ -144,6 +145,12 @@
     }
 
     function zip_and_download(){
+        const prompt=document.getElementById('prompt');
+        const dl=document.getElementById('dl');
+        prompt.innerText='';
+        prompt.style.display='block';
+        // dl.style.display='none';
+        // dl.style.display='none';
         fetch('/zip_and_download',{
                 method: 'POST',
                 headers: {
@@ -151,13 +158,16 @@
                     },
                 body:dates
                 })
-                .then(response => response.text())
-                .then(data => {
-                    console.log('zip back')
+                .then(response => {
+                    console.log('zip back');
                     // console.log(data)
+                    dl.style.display='none';
                     
                   })
-                .catch(error => console.error('Error:', error));
+                .catch(error =>{
+                    console.error('Error:', error)
+
+                } );
     }
 
     </script>
