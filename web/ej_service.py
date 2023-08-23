@@ -124,14 +124,14 @@ class EjService(Flask):
 
 if __name__ == '__main__':
     app = EjService(__name__)
-    # if len(sys.argv)>1:
-    #     # print(f'服务器为：{sys.argv[1]}:5000')
-    #     app.run(debug=True,host=sys.argv[1],port=5023)
-    # else:
-    #     app.run(debug=True)
+    if len(sys.argv)>1:
+        # print(f'服务器为：{sys.argv[1]}:5000')
+        app.run(debug=True,host=sys.argv[1],port=5023)
+    else:
+        app.run(debug=True)
     # app.run(debug=True,host='127.0.0.1',port=5001)
     # app.run(debug=True,host='192.168.10.2',port=5000)
-    app.run(debug=True,host='192.168.1.41',port=5001)
+    # app.run(debug=True,host='192.168.1.41',port=5001)
     # app.run(debug=True,host='192.168.1.149',port=5000)
     # res=wecom_dir()
     # print(res)
