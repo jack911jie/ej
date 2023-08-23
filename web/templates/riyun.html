@@ -129,12 +129,16 @@
                     dates=data;                    
                     document.getElementById('dl').style.display='block';
                     console.log('new zip back')
-                    prompt.style.display='none';
+                    // 修改提示只有在没有错误发生时才生效
+                    if (prompt.innerText === '正在生成日运图片及文本，请等待。') {
+                        prompt.style.display = 'none';
+                    }
 
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.log('Error:',error);
                     prompt.innerText = '处理出错，请重试。';
-                    document.getElementById('dl').style.display='none';
+                    document.getElementById('dl').style.display='none';});
         
 
     }
