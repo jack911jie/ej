@@ -34,9 +34,12 @@
     <div id="prompt" class="prompt">
     </div>
 
+    <div id="dl" style="margin-top:10px;display: none;"><a href="{{ url_for('zip_and_download') }}">下载文件</a></div>
+
     
     <script src="../static/js/common.js"></script>
     <script>
+        let dates;
         document.addEventListener('DOMContentLoaded',function(){
             showDateandWeekDay();
             selectToday('start_date','date');
@@ -110,9 +113,11 @@
         const endDate=document.getElementById('end_date').value;
         const fnNum=document.querySelector('input[name="fn"]:checked').value;
         const prompt=document.getElementById('prompt')
-        prompt.innerText='正在处理，请等待。'
-        console.log(startDate,endDate)
-        fetch('/generate_riyun',{
+        // prompt.innerText='正在处理，请等待。'
+        console.log(startDate,endDate)   
+        prompt.innerText='正在生成日运图片及文本，请等待。'
+
+          fetch('/generate_riyun',{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain'
@@ -121,43 +126,35 @@
                 })
                 .then(response => response.text())
                 .then(data => {
-                    console.log(data)
-                    fetch('/zip_and_download',{
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'text/plain'
-                            },
-                        body:data
-                        })
-                        .then(response => response.text())
-                        .then(data => {
-                            console.log(data)
-                            prompt.innerText='处理完成，请下载'
-                            
-                        })
-                        .catch(error => console.error('Error:', error));
+                    dates=data;                    
+                    document.getElementById('dl').style.display='block';
+                    console.log('new zip back')
+                    prompt.style.display='none';
 
                 })
                 .catch(error => console.error('Error:', error));
+                    prompt.innerText = '处理出错，请重试。';
+                    document.getElementById('dl').style.display='none';
+        
 
     }
 
-        // fetch('/zip_and_download',{
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'text/plain'
-        //             },
-        //         body:'2023-08-22,2023-08-22'
-        //         })
-        //         .then(response => response.text())
-        //         .then(data => {
-        //             console.log(data)
+    function zip_and_download(){
+        fetch('/zip_and_download',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    },
+                body:dates
+                })
+                .then(response => response.text())
+                .then(data => {
+                    console.log('zip back')
+                    // console.log(data)
                     
-        //           })
-        //         .catch(error => console.error('Error:', error));
-
-        //         }
-
+                  })
+                .catch(error => console.error('Error:', error));
+    }
 
     </script>
 </body>

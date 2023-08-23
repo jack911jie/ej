@@ -4,7 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 import week_yun
 import read_config
-from flask import Flask, request, Response,render_template,send_file
+from flask import Flask, request, Response,render_template,send_file,make_response
 import zipfile
 import io
 from datetime import datetime
@@ -66,14 +66,32 @@ class EjService(Flask):
         try:
             self.run_week_txt_cover(fn_num=fn_num,prd=[start_date_input,end_date_input])  
             # self.zip_and_download(prd=[start_date,end_date])  
+
+            #将日期写入临时文件
+
+            tmp_dir=tmp_fn=os.path.join(self.config_ej['output_dir'],'日穿搭','zip')
+            if not os.path.exists(tmp_dir):
+                os.makedirs(tmp_dir)
+            tmp_fn=os.path.join(tmp_dir,'riyun_tmp')
+            with open (tmp_fn, 'w') as f:
+                f.write(f'{start_date},{end_date}')
+
             return f'{start_date},{end_date},OK'
+
+            
+            # return zip
         except Exception as e:
             print('riyun() Error:',e)
             return 'error'+e
 
     def zip_and_download(self):
-        prd_input=request.data.decode('utf-8')
+        # prd_input=request.data.decode('utf-8')
+        tmp_fn=os.path.join(self.config_ej['output_dir'],'日穿搭','zip','riyun_tmp')
+        with open (tmp_fn, 'r') as f:
+            prd_input=f.read()
         
+        print(prd_input)
+        # prd_input='2023-08-22,2023-08-22'
         prd=prd_input.split(',')
         print('zip_and_download() ',prd)
         if prd[0]==prd[1]:
@@ -83,7 +101,7 @@ class EjService(Flask):
 
         path=os.path.join(self.config_ej['output_dir'],'日穿搭')
         memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_STORED) as zipf:
             for root, dir, files in os.walk(path):
                 for file in files:                    
                     try:     
@@ -94,28 +112,26 @@ class EjService(Flask):
           
                     except:
                         pass
-            
-        # print(zipf)
+
         memory_file.seek(0)
-        response = Response(memory_file.read(), content_type='application/zip')
-        response.headers['Content-Disposition'] = f'attachment; filename={output_filename}.zip'
-        return response
-        # return send_file(memory_file, download_name='zip.zip',as_attachment=True)
-        # send_file()
+
+        return Response(memory_file.getvalue(),
+                        mimetype='application/zip',
+                        headers={'Content-Disposition': f'attachment;filename={output_filename}.zip'})
 
         
 
 
 if __name__ == '__main__':
     app = EjService(__name__)
-    if len(sys.argv)>1:
-        print(f'服务器为：{sys.argv[1]}:5000')
-        app.run(debug=True,host=sys.argv[1],port=5023)
-    else:
-        app.run(debug=True)
+    # if len(sys.argv)>1:
+    #     # print(f'服务器为：{sys.argv[1]}:5000')
+    #     app.run(debug=True,host=sys.argv[1],port=5023)
+    # else:
+    #     app.run(debug=True)
     # app.run(debug=True,host='127.0.0.1',port=5001)
     # app.run(debug=True,host='192.168.10.2',port=5000)
-    # app.run(debug=True,host='192.168.1.41',port=5000)
+    app.run(debug=True,host='192.168.1.41',port=5001)
     # app.run(debug=True,host='192.168.1.149',port=5000)
     # res=wecom_dir()
     # print(res)
