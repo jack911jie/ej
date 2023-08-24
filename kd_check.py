@@ -524,7 +524,30 @@ class FruitKd:
 
         return ice_bag
 
+    #师院百香果格式
+    def shiyuan_format_to_wuliu(self,wuliu_company='中通快递',
+                                    guoyuan_back_fn='E:\\temp\\ejj\\团购群\\订单\\果园返单\\订单查询_20230824181755_8lbs4oek4800.xls',
+                                    ktt_dl_wuliu_empty_fn='E:\\temp\\ejj\\团购群\\订单\\wuliu2023-08-24 21_01_40.xlsx.xlsx',
+                                    output_to_upload_dir='E:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件'):
+        df_back=pd.read_excel(guoyuan_back_fn)
+        df_dl=pd.read_excel(ktt_dl_wuliu_empty_fn)
+        #发现有的时候快团团下载的文件，有关物流公司和物流单号的括号写法不一致，通过以下匹配获取。
+        for col_name in df_dl.columns:
+            if re.match(r'^物流公司.*',col_name):
+                wuliu_comp_name=col_name
+            if re.match(r'^物流单号.*',col_name):
+                wuliu_code=col_name
+        
+        df_dl[wuliu_comp_name]=wuliu_company
+        df_dl[wuliu_code]=df_dl['联系电话'].apply(lambda x: str(df_back[df_back['收件人手机号']==x]['运单编号'].tolist()[0]))
+        
+        _to_upload_fn=ktt_dl_wuliu_empty_fn.split('\\')[-1].split('.')[0]+'已写入物流单号待上传.xlsx'
+        to_upload_fn=os.path.join(output_to_upload_dir,_to_upload_fn)
+        df_dl.to_excel(to_upload_fn,index=False)
 
+        print('已写入快递单号')
+
+        
 
 if __name__=='__main__':
     
@@ -570,15 +593,15 @@ if __name__=='__main__':
     # print(rs)
 
     # 二、果园返单后，通过下载快团团模板文件查询快递单号并写入待上传文件
-    p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
-    res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\20230707-桂七物流-.xlsx',
-                            out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
-                            url='http://kd.dh.cx/bb505',
-                            check_date=[20230708],
-                            kd_name='中通快递',
-                            method='download',
-                            page_keyword='运单编号',phn_digits=4,ptn=r'\d{14}')
-    print(res)
+    # p=FruitKd(chromedriver_path='D:/Program Files (x86)/ChromeWebDriver/chromedriver')
+    # res=p.write_xlsx_back_kd(input_xls='e:\\temp\\ejj\\团购群\\订单\\20230707-桂七物流-.xlsx',
+    #                         out_dir='e:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件',
+    #                         url='http://kd.dh.cx/bb505',
+    #                         check_date=[20230708],
+    #                         kd_name='中通快递',
+    #                         method='download',
+    #                         page_keyword='运单编号',phn_digits=4,ptn=r'\d{14}')
+    # print(res)
 
     #参数说明：
     # input_xls：从快团团导出的待回传清单
@@ -592,6 +615,13 @@ if __name__=='__main__':
     # ptn：匹配的快递单号模式，目前已知：申通——r'\d{15}'，顺丰——r'SF\d{13}'
 
     # 其他：申通查询http://kd.dh.cx/df66d，用手机号后4位，顺丰查询http://kd.dh.cx/36cd9，用整个手机号11位
+
+    # 三、师院百香果返回的物流匹配快团团下载的待回传物流单号文件
+    p=FruitKd(chromedriver_path='')
+    p.shiyuan_format_to_wuliu(wuliu_company='中通快递',
+                                    guoyuan_back_fn='E:\\temp\\ejj\\团购群\\订单\\果园返单\\订单查询_20230824181755_8lbs4oek4800.xls',
+                                    ktt_dl_wuliu_empty_fn='E:\\temp\\ejj\\团购群\\订单\\wuliu2023-08-24 21_01_40.xlsx.xlsx',
+                                    output_to_upload_dir='E:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件')
 
 
 
