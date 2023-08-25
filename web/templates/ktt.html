@@ -16,6 +16,7 @@
         
         <hr>
         <div><button id="submit" onclick="dealText()">改格式</button></div>
+        <div id='copyBtn' style="margin-top:10px; display: none;"><button id="copy" onclick="copyText()">复制文本</button></div>
         <div id="result" style="color: #a9474b;"></div>
 
 
@@ -26,6 +27,36 @@
             const postTxt=document.getElementById('post_txt');
             postTxt.value=' 发货人：团团好果 18077796420'
         });
+
+        // function copyText(){
+        //     const resultText=document.getElementById('result').innerText;
+        //     // const text=pEl.innerText;
+        //         //异步 无需浏览器权限申请
+        //         navigator.clipboard.writeText(resultText).then(()=>{
+        //             console.log("copy success");
+        //         },()=>{
+        //             console.log("copy failed");
+        //         });
+        //     }
+
+        function copyText(){
+            const resultBox = document.getElementById('result');
+            const textToCopy = resultBox.textContent; // 获取要复制的文本内容
+
+            // 创建一个临时的textarea元素
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = textToCopy;
+            document.body.appendChild(tempTextarea);
+
+            // 选中文本并执行复制操作
+            tempTextarea.select();
+            document.execCommand('copy');
+
+            // 移除临时的textarea元素
+            document.body.removeChild(tempTextarea);
+
+            // alert('已复制到剪贴板');
+        }
 
         function dealText(){
             const postText=document.getElementById('post_txt').value;
@@ -63,6 +94,11 @@
             resultBox.classList.add('result');
 
             console.log(result);
+            const copyBtn=document.getElementById('copyBtn');
+            if(txtInput){
+                copyBtn.style.display='block';
+            }
+            
 
 
 
