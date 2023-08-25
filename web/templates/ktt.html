@@ -78,30 +78,35 @@
             const txtInput=document.getElementById('txt_input').value;
             const resultBox=document.getElementById('result');
             
-            // 使用正则表达式匹配信息，并处理格式
-            // let result = txtInput.replace(/联系人\n\n([\s\S]+?)\n\n联系电话\n\n([\s\S]+?)\n\n详细地址\n\n([\s\S]+?)\n/g, function(match, name, phone, address) {
-            //     return `${name.trim()} ${phone.trim()} ${address.trim()} 发货人：发货人：团团好果 18077796420`;
-            // });
+            
 
             // 判断是否是多个联系人段落的格式
             const isMultipleContacts = txtInput.includes('联系人');
             
             let formattedResult;
             let  numberedText;
+            if(txtInput){
             if (isMultipleContacts) {
                 // 使用正则表达式匹配每段联系人信息，并处理格式
-                const result = txtInput.replace(/联系人\n\n([\s\S]+?)\n\n联系电话\n\n([\s\S]+?)\n\n详细地址\n\n([\s\S]+?)(?=\n\n联系人|$)/g, function(match, name, phone, address) {
+                let result = txtInput.replace(/联系人\n\n([\s\S]+?)\n\n联系电话\n\n([\s\S]+?)\n\n详细地址\n\n([\s\S]+?)(?=\n\n联系人|$)/g, function(match, name, phone, address) {
                     return `${name.trim()} ${phone.trim()} ${address.trim()} ${postText}`;
                 });
+
+                result=result.replace(/(^\n+|\n+$)/g,'');
+                result=result.trim();
+
                 
                 // 将每段末尾的换行符替换为空字符串
                 formattedResult = result.replace(/\n$/gm, '');
                 numberedText=addLineNumbers(formattedResult);
             } else {
                 // 如果不是多个联系人段落的格式，直接追加发货人信息
-                const lines = txtInput.split('\n');
+                let lines = txtInput.split('\n');
+                lines = lines.filter(element => element !== "");
                 const formattedLines = lines.map(line => `${line.trim()} ${postText}`);
                 formattedResult = formattedLines.join('\n');
+                formattedResult=formattedResult.replace(/(^\n+|\n+$)/g,'');
+                formattedResult=formattedResult.trim();
                 numberedText=addLineNumbers(formattedResult);
             }
 
@@ -111,6 +116,7 @@
             // resultBox.innerText=formattedResult;
 
             resultBox.classList.add('result');
+            }
 
             // console.log(result);
             const copyBtn=document.getElementById('copyBtn');
