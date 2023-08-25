@@ -22,6 +22,9 @@ class EjService(Flask):
         #渲染页面
         #首页
         self.add_url_rule('/riyun',view_func=self.riyun)
+
+        # 快团团
+        self.add_url_rule('/ktt', view_func=self.ktt,methods=['GET','POST'])
         
         
         # 生成日运
@@ -32,6 +35,9 @@ class EjService(Flask):
 
     def riyun(self):
         return render_template('/riyun.html')
+
+    def ktt(self):
+        return render_template('/ktt.html')
 
     def run_week_txt_cover(self,fn_num,prd=['20220822','20220828'],sense_word_judge='yes'):
         work_dir=self.config_ej['work_dir']

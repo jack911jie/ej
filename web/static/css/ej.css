@@ -27,6 +27,13 @@ h3{
   background: rgb(248, 249, 252);
   color:#5a6ba3
 }
+.result{
+  margin-top: 20px;
+  color:#901150;
+  border: #ac6161 1px solid;
+  padding:8px;
+  border-radius: 3px;
+}
 .prompt{
   color:#d052bb;
 }
