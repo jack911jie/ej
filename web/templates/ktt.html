@@ -41,10 +41,16 @@
 
         function copyText(){
             const resultBox = document.getElementById('result');
-            const textToCopy = resultBox.textContent; // 获取要复制的文本内容
+            const postText=document.getElementById('post_txt').value;
+            let textToCopy = resultBox.textContent; // 获取要复制的文本内容
+
+            //js处理换行符，确保正确换行
+            const regex = new RegExp(`${postText}`, 'g');
+            textToCopy=textToCopy.replace(regex, `${postText}\n`);
 
             // 创建一个临时的textarea元素
             const tempTextarea = document.createElement('textarea');
+
             tempTextarea.value = textToCopy;
             document.body.appendChild(tempTextarea);
 
@@ -93,7 +99,7 @@
             resultBox.innerText=formattedResult;
             resultBox.classList.add('result');
 
-            console.log(result);
+            // console.log(result);
             const copyBtn=document.getElementById('copyBtn');
             if(txtInput){
                 copyBtn.style.display='block';
