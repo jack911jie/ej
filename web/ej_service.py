@@ -84,8 +84,8 @@ class EjService(Flask):
 
             date_input=datetime.strptime(data['date']+' 00:00:00','%Y-%m-%d %H:%M:%S')
 
-            print(date_input)
-            print(last_date)
+            # print(date_input)
+            # print(last_date)
     
             dates=sheet.range(f'A3:A{last_row}').value
             try:
@@ -102,8 +102,8 @@ class EjService(Flask):
                 wb.save(riyun_fn)
                 wb.close()
                 app.quit()
-        except:
-            print('write xlsx error')
+        except Exception as e:
+            print('write xlsx error',e)
             return {'res':'failed','error':'write xlsx error'}
 
         
@@ -118,31 +118,49 @@ class EjService(Flask):
         else:
             xls='d:\\工作目录\\ejj\\运势\\运势2.xlsx'
 
-        eachday_output_dir=os.path.join(output_dir,'日穿搭')
-        cover_save_dir=os.path.join(output_dir,'日穿搭','0-每周运势封图')
+        try:
 
-        # print('\n正在处理每日穿搭配色图\n')
-        week_pic=week_yun.ExportImage(work_dir=work_dir)
-        dec_txt=week_pic.batch_deal(prd=prd,out_put_dir=eachday_output_dir,xls=xls)
+            eachday_output_dir=os.path.join(output_dir,'日穿搭')
+            cover_save_dir=os.path.join(output_dir,'日穿搭','0-每周运势封图')
 
-        # print('\n正在处理每日穿搭配色文案\n')
-        week_txts=week_yun.ExportWeekYunTxt(work_dir=work_dir,import_dec_dic=dec_txt)
-        week_txts.all_date_wx(prd=prd,xls=xls,save_dir=eachday_output_dir,sense_word_judge=sense_word_judge)
+            # print('\n正在处理每日穿搭配色图\n')
+            week_pic=week_yun.ExportImage(work_dir=work_dir)
+            res=week_pic.batch_deal(prd=prd,out_put_dir=eachday_output_dir,xls=xls)
+            if res['res']=='ok':
+                dec_txt=res['res_data']
 
-        # print('\n正在生成本周周运封图\n')
-        # week_cover=week_yun.WeekYunCover(work_dir=work_dir)
-        # week_cover.export(prd=['20220822','20220828'],save_dir=cover_save_dir)
+                # print('\n正在处理每日穿搭配色文案\n')
+                week_txts=week_yun.ExportWeekYunTxt(work_dir=work_dir,import_dec_dic=dec_txt)
+                week_txts.all_date_wx(prd=prd,xls=xls,save_dir=eachday_output_dir,sense_word_judge=sense_word_judge)
 
-        # os.startfile(eachday_output_dir)
+                # print('\n正在生成本周周运封图\n')
+                # week_cover=week_yun.WeekYunCover(work_dir=work_dir)
+                # week_cover.export(prd=['20220822','20220828'],save_dir=cover_save_dir)
+
+                # os.startfile(eachday_output_dir)
+                return {'res':'ok'}
+            else:
+                return {'res':'failed','error':res['error']}
+        except Exception as e:
+            # raise FERROR('error where generate riyun pics and txt')
+            print(e)
+            return {'res':'failed','error':'error when generate riyun pics and txt'}
+
+
 
     def generate_riyun(self):
         data=request.data.decode('utf-8')
+        # print(data)
         fn_num,start_date,end_date=data.split('|')
         start_date_input=start_date.replace('-','')
         end_date_input=end_date.replace('-','')
         try:
-            self.run_week_txt_cover(fn_num=fn_num,prd=[start_date_input,end_date_input])  
+            res_generate=self.run_week_txt_cover(fn_num=fn_num,prd=[start_date_input,end_date_input])  
             # self.zip_and_download(prd=[start_date,end_date])  
+            # print(res_generate)
+            if res_generate['res']!='ok':
+                return {'res':'failed','error':res_generate['error']}
+            
 
             #将日期写入临时文件
 
@@ -153,13 +171,13 @@ class EjService(Flask):
             with open (tmp_fn, 'w') as f:
                 f.write(f'{start_date},{end_date}')
 
-            return f'{start_date},{end_date},OK'
+            return {'res':'ok','res_data':f'{start_date},{end_date},OK'}
 
             
             # return zip
         except Exception as e:
             print('riyun() Error:',e)
-            return 'error'+e
+            return {'res':'failed','error':e}
 
     def zip_and_download(self):
         # prd_input=request.data.decode('utf-8')
@@ -167,7 +185,7 @@ class EjService(Flask):
         with open (tmp_fn, 'r') as f:
             prd_input=f.read()
         
-        print(prd_input)
+        # print(prd_input)
         # prd_input='2023-08-22,2023-08-22'
         prd=prd_input.split(',')
         print('zip_and_download() ',prd)

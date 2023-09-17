@@ -27,12 +27,13 @@
     <div id="end_date_block"><h3>· 请选择结束日  <input id='end_date' type='date'></h3></div>
 
     <hr>
+    <div id="prompt" class="prompt">
+    </div>
     <div>
         <button id="submit" onclick=submit()>生成文案</button>
     </div>
 
-    <div id="prompt" class="prompt">
-    </div>
+   
 
     <div id="dl" style="margin-top:10px;display: none;"><a href="{{ url_for('zip_and_download') }}" onclick="hideDownload()">下载文件</a></div>
     <!-- <div id="dl" style="margin-top:10px;display: none;" onclick="downloadFile()">点击下载文件</div> -->
@@ -133,20 +134,28 @@
                     },
                 body:fnNum+'|'+startDate+'|'+endDate
                 })
-                .then(response => response.text())
+                .then(response => response.json())
                 .then(data => {
-                    dates=data;                    
-                    document.getElementById('dl').style.display='block';
-                    console.log('new zip back')
-                    // 修改提示只有在没有错误发生时才生效
-                    if (prompt.innerText === '正在生成日运图片及文本，请等待。') {
-                        prompt.style.display = 'none';
+                    res=data.res;      
+                    console.log(res)              
+                    if(res==='ok'){
+                        document.getElementById('dl').style.display='block';
+                        console.log('new zip back')
+                        // 修改提示只有在没有错误发生时才生效
+                        if (prompt.innerText === '正在生成日运图片及文本，请等待。') {
+                            prompt.style.display = 'none';
+                        }
+                    }else{
+                        console.log('error',data.error)
+                        prompt.innerText = data.error;
+                        alert('生成错误'+'\n'+data.error)
                     }
+                    
 
                 })
                 .catch(error => {
                     console.log('Error:',error);
-                    prompt.innerText = '处理出错，请重试。';
+                    prompt.innerText = error;
                     document.getElementById('dl').style.display='none';});
         
 
