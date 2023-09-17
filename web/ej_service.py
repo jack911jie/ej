@@ -114,9 +114,9 @@ class EjService(Flask):
         work_dir=self.config_ej['work_dir']
         output_dir=self.config_ej['output_dir']
         if fn_num=='1':
-            xls='d:\\工作目录\\ejj\\运势\\运势.xlsx'
+            xls=os.path.join(work_dir,'运势','运势.xlsx')
         else:
-            xls='d:\\工作目录\\ejj\\运势\\运势2.xlsx'
+            xls=os.path.join(work_dir,'运势','运势2.xlsx')
 
         try:
 
