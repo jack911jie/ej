@@ -27,11 +27,24 @@ h3{
   background: rgb(248, 249, 252);
   color:#5a6ba3
 }
+#container{
+  width:100%;
+  display:flex;
+  flex-direction: column;
+  background-color:#fffbf6 ;
+  text-align: left; 
+  justify-content: center; 
+  /* align-items: center; */
+  flex-wrap: wrap; 
+}
 .riyun-box{
+  /* width: 100%; */
+  text-align: left;
   padding:10px;
+  /* justify-content: left; */
 }
 .yuncheng-txt{
-  width:60%;
+  width: 100%;
   height:100px;
 }
 .result{
@@ -43,6 +56,10 @@ h3{
 }
 .prompt{
   color:#d052bb;
+}
+.selectJx{
+  margin-top:6px;
+  margin-bottom:6px;
 }
 .cover-button{
   display:table-cell;
