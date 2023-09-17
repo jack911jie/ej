@@ -2,12 +2,16 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'modules'))
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+import ganzhi
 import week_yun
+import pandas as pd
 import read_config
 from flask import Flask, request, Response,render_template,send_file,make_response
 import zipfile
 import io
 from datetime import datetime
+import json
+import xlwings as xw
 
 
 class EjService(Flask):
@@ -25,6 +29,8 @@ class EjService(Flask):
 
         # 快团团
         self.add_url_rule('/ktt', view_func=self.ktt,methods=['GET','POST'])
+        #日运录入
+        self.add_url_rule('/riyun_input_page',view_func=self.riyun_input_page,methods=['GET','POST'])
         
         
         # 生成日运
@@ -33,11 +39,71 @@ class EjService(Flask):
         # 结果打包并返回前端
         self.add_url_rule('/zip_and_download', view_func=self.zip_and_download,methods=['GET','POST'])
 
+
+        # 写入日运表
+        self.add_url_rule('/write_into_riyun_xlsx', view_func=self.write_into_riyun_xlsx,methods=['GET','POST'])
+
+
+    def riyun_input_page(self):
+        return render_template('/riyun_input.html')
+
     def riyun(self):
         return render_template('/riyun.html')
 
     def ktt(self):
         return render_template('/ktt.html')
+
+    def write_into_riyun_xlsx(self):
+        print('writing into riyun xlsx')
+        data=request.json
+        y,m,d=data['date'].split('-')
+        gz=ganzhi.GanZhi().cal_dateGZ(int(y),int(m),int(d),8)
+        data['tg']=gz['bazi'][4]
+        data['dz']=gz['bazi'][5]
+
+        try:
+            df=pd.DataFrame(data,index=[0])
+            df=df[['date', 'weekday', 'tg', 'dz', 'color-mu', 'txt-mu', 'color-huo', 'txt-huo', 'color-tu', 'txt-tu', 'color-jin', 'txt-jin', 'color-shui', 'txt-shui']]
+            # print(df)
+            with open(os.path.join(os.path.dirname(__file__),'config','riyun.config'),'r',encoding='utf-8') as f:
+                config_ej=json.load(f)
+            riyun_fn=config_ej['riyun_fn']
+
+
+            app=xw.App(visible=False)
+            wb=app.books.open(riyun_fn)
+            sheet=wb.sheets['运势']
+            last_row=sheet.range('A1048576').end('up').row
+            
+            last_date=sheet.range(f'A{last_row}').value
+
+            date_input=datetime.strptime(data['date']+' 00:00:00','%Y-%m-%d %H:%M:%S')
+
+            print(date_input)
+            print(last_date)
+    
+            dates=sheet.range(f'A3:A{last_row}').value
+            try:
+                row_number=dates.index(date_input)+3
+            except:
+                row_number=last_row+1
+            finally:            
+                print(f'write into row {row_number}')
+                
+                # 将 DataFrame 数据写入 Excel 工作表的指定行号
+                print(df.values.tolist)
+                sheet.range(f'A{row_number}:N{row_number}').value=df.values
+
+                wb.save(riyun_fn)
+                wb.close()
+                app.quit()
+        except:
+            print('write xlsx error')
+            return {'res':'failed','error':'write xlsx error'}
+
+        
+
+        return {'res':'ok'}
 
     def run_week_txt_cover(self,fn_num,prd=['20220822','20220828'],sense_word_judge='yes'):
         work_dir=self.config_ej['work_dir']
@@ -125,7 +191,9 @@ class EjService(Flask):
                         mimetype='application/zip',
                         headers={'Content-Disposition': f'attachment;filename={output_filename}.zip'})
 
-        
+
+class FERROR(Exception):
+    pass
 
 
 if __name__ == '__main__':
@@ -135,7 +203,8 @@ if __name__ == '__main__':
         app.run(debug=True,host=sys.argv[1],port=5023)
     else:
         app.run(debug=True)
-    # app.run(debug=True,host='127.0.0.1',port=5001)
+
+    # app.run(debug=True,host='127.0.0.1',port=5023)
     # app.run(debug=True,host='192.168.10.2',port=5000)
     # app.run(debug=True,host='192.168.1.41',port=5001)
     # app.run(debug=True,host='192.168.1.149',port=5000)

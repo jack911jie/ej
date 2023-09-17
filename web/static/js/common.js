@@ -169,3 +169,44 @@ function dateFormat(currentDate,fmt){
         hideCustomModal(this.id);
     }
   }
+
+  function showDateandWeekDay(showDay){
+    const dateBlock=document.getElementById(showDay);
+        const today=new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        // 获取星期几的数值
+        const dayOfWeek = today.getDay();
+        // 将星期几的数值转换为中文
+        let weekDayChinese = '';
+        switch (dayOfWeek) {
+        case 0:
+            weekDayChinese = '星期日';
+            break;
+        case 1:
+            weekDayChinese = '星期一';
+            break;
+        case 2:
+            weekDayChinese = '星期二';
+            break;
+        case 3:
+            weekDayChinese = '星期三';
+            break;
+        case 4:
+            weekDayChinese = '星期四';
+            break;
+        case 5:
+            weekDayChinese = '星期五';
+            break;
+        case 6:
+            weekDayChinese = '星期六';
+            break;
+        default:
+            weekDayChinese = '未知';
+        }
+        dateDisplay=`${year} 年 ${month} 月 ${day} 日
+                    ${weekDayChinese}`; 
+        dateBlock.innerText=dateDisplay;
+        return weekDayChinese;
+}

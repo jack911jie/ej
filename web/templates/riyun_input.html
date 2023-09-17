@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E姐姐方案生成</title>
+    <link rel="stylesheet" href="../static/css/ej.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fffbf6">
+    <div id="container" style="display:flex;background-color:#fffbf6 ;text-align: center; justify-content: center; width: 400px;flex-wrap: wrap; ">
+        <div id="dateAndWeekday" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 10px;"></div>
+    </div>   
+
+    <div><h3><span id="dateInputBox">· 日运日期</span>  <input id='dateInput' type='date'></h3></div>    
+    <hr>
+    <div class="riyun-box" style="background-color:rgb(220, 255, 224);">
+        <div id="color-mu-box">木-颜色</div><div><input id='color-mu'></div>
+        <div id="mu-box">木-运程<div><input id="mu" type="text" class="yuncheng-txt"></div></div>
+    </div>
+    <hr>
+    <div class="riyun-box" style="background-color:rgb(255, 226, 226);">
+        <div id="color-huo-box">火-颜色</div><div><input id='color-huo'></div>
+        <div id="huo-box">火-运程<div><input id="huo" type="text" class="yuncheng-txt"></div></div>
+    </div>
+    <hr>
+    <div class="riyun-box" style="background-color:rgb(161, 151, 121);">
+        <div id="color-tu-box">土-颜色</div><div><input id='color-tu'></div>
+        <div id="tu-box">土-运程<div><input id="tu" type="text" class="yuncheng-txt"></div></div>
+    </div>
+    <hr>
+    <div class="riyun-box" style="background-color:rgb(255, 254, 221);">
+        <div id="color-jin-box">金-颜色</div><div><input id='color-jin'></div>
+        <div id="jin-box">金-运程<div><input id="jin" type="text" class="yuncheng-txt"></div></div>
+    </div>
+    <hr>
+    <div class="riyun-box" style="background-color:rgb(171, 208, 255);">
+        <div id="color-shui-box">水-颜色</div><div><input id='color-shui'></div>
+        <div id="shui-box">水-运程<div><input id="shui" type="text" class="yuncheng-txt"></div></div>
+    </div>
+    <hr>
+    <div>
+        <button id="submit" onclick=submit()>写入日运表</button>
+    </div>
+
+    <div id="prompt" class="prompt">
+    </div>
+
+    
+    <script src="../static/js/common.js"></script>
+    <script>
+        let weekday;
+        document.addEventListener('DOMContentLoaded',function(){
+            weekday=showDateandWeekDay("dateAndWeekday");
+            selectToday('dateInput','date');
+            
+        });
+    
+    
+    
+    function submit(){
+        const date=document.getElementById('dateInput').value;
+        const colorMu=document.getElementById('color-mu').value;
+        const txtMu=document.getElementById('mu').value
+        const colorHuo=document.getElementById('color-huo').value;
+        const txtHuo=document.getElementById('huo').value
+        const colorTu=document.getElementById('color-tu').value;
+        const txtTu=document.getElementById('tu').value
+        const colorJin=document.getElementById('color-jin').value;
+        const txtJin=document.getElementById('jin').value
+        const colorShui=document.getElementById('color-shui').value;
+        const txtShui=document.getElementById('shui').value
+
+        const wday=weekday.slice(2,)
+        // prompt.innerText='正在处理，请等待。'
+        const prompt=document.getElementById('prompt');
+        prompt.innerText='正在写入日运表'
+
+        const data={
+            'date':date,
+            'weekday':wday,
+            'color-mu':colorMu,
+            'txt-mu':txtMu,
+            'color-huo':colorHuo,
+            'txt-huo':txtHuo,
+            'color-tu':colorTu,
+            'txt-tu':txtTu,
+            'color-jin':colorJin,
+            'txt-jin':txtJin,
+            'color-shui':colorShui,
+            'txt-shui':txtShui
+        }
+
+        console.log(data)
+
+        fetch('/write_into_riyun_xlsx',{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                },
+            body:JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.res);  
+                
+                if(data.res==='ok'){
+                    alert('写入成功')
+                    window.location.href='/riyun_input_page'
+                }else{
+                    alert('写入不成功'+data.res.error)
+                }
+                
+
+            })
+            .catch(error => {
+                console.log('Error:',error);
+                prompt.innerText = '处理出错，请重试。';  
+            });
+
+    }
+
+    
+    
+
+    </script>
+</body>
