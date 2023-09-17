@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E姐姐方案生成</title>
+    <link rel="stylesheet" href="../static/css/ej.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fffbf6">
+    <div id="container" style="display:flex;background-color:#fffbf6 ;text-align: center; justify-content: center; width: 400px;flex-wrap: wrap; ">
+        <div id="dateAndWeekday" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 10px;"></div>
+   
+
+        <div class="cover-button"><a href='./riyun_input_page'>输入日运</a></div>
+        <div class="cover-button"><a href='./riyun'>生成日运</a></div>
+
+    </div>   
+    <script src="../static/js/common.js"></script>
+    <script>
+        let weekday;
+        document.addEventListener('DOMContentLoaded',function(){
+            weekday=showDateandWeekDay("dateAndWeekday");
+            selectToday('dateInput','date');
+            
+        });
+    </script>
+</body>
+</html>

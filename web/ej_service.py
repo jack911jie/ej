@@ -42,6 +42,8 @@ class EjService(Flask):
 
         # 写入日运表
         self.add_url_rule('/write_into_riyun_xlsx', view_func=self.write_into_riyun_xlsx,methods=['GET','POST'])
+        # 写入日运表
+        self.add_url_rule('/riyun_menu', view_func=self.riyun_menu,methods=['GET','POST'])
 
 
     def riyun_input_page(self):
@@ -49,6 +51,9 @@ class EjService(Flask):
 
     def riyun(self):
         return render_template('/riyun.html')
+
+    def riyun_menu(self):
+        return render_template('/riyun_menu.html')
 
     def ktt(self):
         return render_template('/ktt.html')

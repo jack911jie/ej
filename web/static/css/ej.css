@@ -53,6 +53,14 @@ h3{
   text-align: center; 
   vertical-align: middle;
 }
+.cover-button a {
+  color: rgb(108, 109, 90);
+  font-size: 32px;
+  text-decoration: none;
+  display: block; /* 让链接元素变成块级元素，以充分利用居中样式 */
+  width: 100%; /* 让链接元素充满父元素宽度 */
+  text-align: center; /* 文字水平居中 */
+}
 .cusClsTkn{
   background-color: #959e96;
   color:#f9fffd;
