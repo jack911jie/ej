@@ -11,9 +11,14 @@
         <div id="dateAndWeekday" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 10px;text-align: center;"></div>
     
 
-        <div><h3><span id="dateInputBox">· 日运日期</span>  <input id='dateInput' type='date'></h3></div>    
+        <div id="dateBlock" ><span id="dateInputBox" style="color:rgb(229, 151, 177);font-size:12px;font-weight: bold;margin-right:8px;">日运日期  </span>  
+            <input id='dateInput' type='date' onchange="getTempSave();showDatePrompt();showSelectedWeekDay();">
+            <h3><span id="weekDaySelected" style="font-size:14px;margin-left:6px;color:rgb(241, 129, 219)"></span></h3>
+            <h3><span id="datePrompt" style="font-size:14px;margin-left:6px;color:rgb(241, 129, 219)">今天</span></h3>
+            <button id="tempSave" style="width:60px;height:24px;margin-left:6px;" onclick="tempSave();">暂存</button>
+        </div>    
         <hr>
-        <div class="riyun-box" style="background-color:rgb(220, 255, 224);">
+        <div class="riyun-box" style="background-color:rgb(220, 255, 224);margin-top:86px;">
             <div id="color-mu-box">木-颜色</div><div><input id='color-mu'></div>
             <div id="selectJx-mu" class="selectJx">性质
                 <select id="mu-jx">
@@ -87,12 +92,141 @@
     <script>
         let weekday;
         document.addEventListener('DOMContentLoaded',function(){
-            weekday=showDateandWeekDay("dateAndWeekday");
+            weekday=showDateandWeekDay("dateAndWeekday");            
             selectToday('dateInput','date');
-            
+            showSelectedWeekDay();
+            showDatePrompt();
+            clearEarlyTempSave();
+            getTempSave();            
         });
+
+    function showSelectedWeekDay(){
+        const selectedWeekDay=calculateWeekDay(new Date(document.getElementById('dateInput').value));
+        document.getElementById('weekDaySelected').innerText=selectedWeekDay;
+    }
+
+    function tempSave(){
+        const date=document.getElementById('dateInput').value;
+        const colorMu=document.getElementById('color-mu').value;
+        const jxMu=document.getElementById('mu-jx').value;
+        const txtMu=document.getElementById('mu').value
+        const colorHuo=document.getElementById('color-huo').value;
+        const jxHuo=document.getElementById('huo-jx').value;
+        const txtHuo=document.getElementById('huo').value
+        const colorTu=document.getElementById('color-tu').value;
+        const jxTu=document.getElementById('tu-jx').value;
+        const txtTu=document.getElementById('tu').value
+        const colorJin=document.getElementById('color-jin').value;
+        const jxJin=document.getElementById('jin-jx').value;
+        const txtJin=document.getElementById('jin').value
+        const colorShui=document.getElementById('color-shui').value;
+        const jxShui=document.getElementById('shui-jx').value;
+        const txtShui=document.getElementById('shui').value
+        const wday=weekday.slice(2,)
+        const data={
+            'date':date,
+            'weekday':wday,
+            'color-mu':colorMu,
+            'txt-mu':jxMu+txtMu,
+            'color-huo':colorHuo,
+            'txt-huo':jxHuo+txtHuo,
+            'color-tu':colorTu,
+            'txt-tu':jxTu+txtTu,
+            'color-jin':colorJin,
+            'txt-jin':jxJin+txtJin,
+            'color-shui':colorShui,
+            'txt-shui':jxShui+txtShui
+        }
+
+        localStorage.setItem(date+'-ejj',JSON.stringify(data));
+        alert(dateToString(date,'date')+' 日运暂存成功');
+
+    }
+
+
+    function getTempSave(){
+        const dateStr=dateToString(document.getElementById('dateInput').value,'date');
+        const data=localStorage.getItem(dateStr+'-ejj');
+        if(data){
+            dataDic=JSON.parse(data);
+            console.log(JSON.parse(data));
+            console.log(dataDic['color-mu'],dataDic['txt-mu'].slice(0,3),dataDic['txt-mu'].slice(3,))
+            // document.getElementById('dateInput').value=dataD
+            document.getElementById('color-mu').value=dataDic['color-mu']
+            document.getElementById('mu-jx').value=dataDic['txt-mu'].slice(0,3);
+            document.getElementById('mu').value=dataDic['txt-mu'].slice(3,);
+            document.getElementById('color-huo').value=dataDic['color-huo']
+            document.getElementById('huo-jx').value=dataDic['txt-huo'].slice(0,3);
+            document.getElementById('huo').value=dataDic['txt-huo'].slice(3,);
+            document.getElementById('color-tu').value=dataDic['color-tu']
+            document.getElementById('tu-jx').value=dataDic['txt-tu'].slice(0,3);
+            document.getElementById('tu').value=dataDic['txt-tu'].slice(3,);
+            document.getElementById('color-jin').value=dataDic['color-jin']
+            document.getElementById('jin-jx').value=dataDic['txt-jin'].slice(0,3);
+            document.getElementById('jin').value=dataDic['txt-jin'].slice(3,);
+            document.getElementById('color-shui').value=dataDic['color-shui']
+            document.getElementById('shui-jx').value=dataDic['txt-shui'].slice(0,3);
+            document.getElementById('shui').value=dataDic['txt-shui'].slice(3,);
+
+        }else{
+            document.getElementById('color-mu').value='';
+            document.getElementById('mu-jx').value='【吉】';
+            document.getElementById('mu').value='';
+            document.getElementById('color-huo').value='';
+            document.getElementById('huo-jx').value='【吉】';
+            document.getElementById('huo').value='';
+            document.getElementById('color-tu').value='';
+            document.getElementById('tu-jx').value='【吉】';
+            document.getElementById('tu').value='';
+            document.getElementById('color-jin').value='';
+            document.getElementById('jin-jx').value='【吉】';
+            document.getElementById('jin').value='';
+            document.getElementById('color-shui').value='';
+            document.getElementById('shui-jx').value='【吉】';
+            document.getElementById('shui').value='';
+        }
+
+    }
     
-    
+    function clearEarlyTempSave(){
+        const today=new Date();
+        const todayStr=dateToString(today,'date');
+        for(let i=0;i<localStorage.length;i++){
+            const key=localStorage.key(i);
+            const storageDate=key.slice(0,10);       
+            const dateDiff=calculateDateDifference(storageDate,todayStr)
+            if(dateDiff>1){
+                localStorage.removeItem(key);
+            }            
+        }
+    }
+
+    function showDatePrompt(){
+        const datePrompt=document.getElementById('datePrompt');
+        const today=new Date();
+        const todayStr=dateToString(today,'date');
+        const selectedDate=dateToString(document.getElementById('dateInput').value,'date');
+        const dateDiff=calculateDateDifference(todayStr,selectedDate);
+        // console.log(dateDiff);
+        if(dateDiff===0){
+            datePrompt.innerText='今天';
+        }else if(dateDiff===1){
+            datePrompt.innerText='明天';
+        }else if(dateDiff===2){
+            datePrompt.innerText='后天';
+        }else if(dateDiff===3){
+            datePrompt.innerText='大后天';
+        }else if(dateDiff===-1){
+            datePrompt.innerText='昨天';
+        }else if(dateDiff>3){
+            datePrompt.innerText=`${dateDiff}天后`;
+        }else if(dateDiff<-1){
+            datePrompt.innerText=`${Math.abs(dateDiff)}天前`;
+        }else{
+            datePrompt.innerText='';
+        }
+
+    }
     
     function submit(){
         const date=document.getElementById('dateInput').value;

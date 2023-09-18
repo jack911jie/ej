@@ -347,6 +347,7 @@ class ExportWeekYunTxt(WeekYun):
             
                 
             daycmt=self.day_cmt(date_input=date_input,xls=xls)
+            # print(date_input)
             df=pd.DataFrame()        
             df['日期']=daycmt['日期']
             df['星期']=daycmt['星期']

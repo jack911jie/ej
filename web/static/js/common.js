@@ -48,6 +48,20 @@ function dateToString(dateInput,format){
     return formattedDate;
 }
 
+function calculateDateDifference(date1, date2) {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+  
+    // 将时间戳转换为毫秒并计算相差的毫秒数
+    // const timeDifference = Math.abs(d2 - d1);
+    const timeDifference = d2 - d1;
+  
+    // 将毫秒数转换为天数
+    const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+  
+    return daysDifference;
+  }
+
 function calculateDate(dateInput,days){
     const currentDate = new Date(dateInput);
 
@@ -171,42 +185,50 @@ function dateFormat(currentDate,fmt){
   }
 
   function showDateandWeekDay(showDay){
-    const dateBlock=document.getElementById(showDay);
+        const dateBlock=document.getElementById(showDay);
         const today=new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
-        // 获取星期几的数值
-        const dayOfWeek = today.getDay();
-        // 将星期几的数值转换为中文
-        let weekDayChinese = '';
-        switch (dayOfWeek) {
-        case 0:
-            weekDayChinese = '星期日';
-            break;
-        case 1:
-            weekDayChinese = '星期一';
-            break;
-        case 2:
-            weekDayChinese = '星期二';
-            break;
-        case 3:
-            weekDayChinese = '星期三';
-            break;
-        case 4:
-            weekDayChinese = '星期四';
-            break;
-        case 5:
-            weekDayChinese = '星期五';
-            break;
-        case 6:
-            weekDayChinese = '星期六';
-            break;
-        default:
-            weekDayChinese = '未知';
-        }
+        const weekDayChinese=calculateWeekDay(today);
+        
         dateDisplay=`${year} 年 ${month} 月 ${day} 日
                     ${weekDayChinese}`; 
         dateBlock.innerText=dateDisplay;
         return weekDayChinese;
+}
+
+function calculateWeekDay(dateInput){
+    // 获取星期几的数值
+    const dayOfWeek = dateInput.getDay();
+    console.log(dayOfWeek)
+    // 将星期几的数值转换为中文
+    let weekDayChinese = '';
+    switch (dayOfWeek) {
+    case 0:
+        weekDayChinese = '星期日';
+        break;
+    case 1:
+        weekDayChinese = '星期一';
+        break;
+    case 2:
+        weekDayChinese = '星期二';
+        break;
+    case 3:
+        weekDayChinese = '星期三';
+        break;
+    case 4:
+        weekDayChinese = '星期四';
+        break;
+    case 5:
+        weekDayChinese = '星期五';
+        break;
+    case 6:
+        weekDayChinese = '星期六';
+        break;
+    default:
+        weekDayChinese = '未知';
+    }
+
+    return weekDayChinese;
 }

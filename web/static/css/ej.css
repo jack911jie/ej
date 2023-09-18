@@ -14,6 +14,18 @@ h2{
 h3{
   color:#685a3f;
 }
+#dateBlock{
+  display:flex;
+  flex-direction: row;
+  position: fixed;
+  justify-content: center;
+  align-items: center;
+  left:15px;
+  top:80px;
+  z-index: 1;
+  background-color: #fff1ff;
+  padding:10px;
+}
 
 #BasicInfo{
   background: rgb(211, 211, 196);

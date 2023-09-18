@@ -150,7 +150,7 @@ class EjService(Flask):
 
     def generate_riyun(self):
         data=request.data.decode('utf-8')
-        # print(data)
+        print(data)
         fn_num,start_date,end_date=data.split('|')
         start_date_input=start_date.replace('-','')
         end_date_input=end_date.replace('-','')
