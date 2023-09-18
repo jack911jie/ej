@@ -138,7 +138,7 @@
             'txt-shui':jxShui+txtShui
         }
 
-        localStorage.setItem(date+'-ejj',JSON.stringify(data));
+        localStorage.setItem('ejj-'+date+'-ejj',JSON.stringify(data));
         alert(dateToString(date,'date')+' 日运暂存成功');
 
     }
@@ -146,7 +146,7 @@
 
     function getTempSave(){
         const dateStr=dateToString(document.getElementById('dateInput').value,'date');
-        const data=localStorage.getItem(dateStr+'-ejj');
+        const data=localStorage.getItem('ejj-'+dateStr+'-ejj');
         if(data){
             dataDic=JSON.parse(data);
             console.log(JSON.parse(data));
@@ -193,7 +193,7 @@
         const todayStr=dateToString(today,'date');
         for(let i=0;i<localStorage.length;i++){
             const key=localStorage.key(i);
-            const storageDate=key.slice(0,10);       
+            const storageDate=key.slice(4,14);       
             const dateDiff=calculateDateDifference(storageDate,todayStr)
             if(dateDiff>1){
                 localStorage.removeItem(key);
