@@ -245,15 +245,15 @@
         const colorShui=document.getElementById('color-shui').value;
         const jxShui=document.getElementById('shui-jx').value;
         const txtShui=document.getElementById('shui').value
-
-        const wday=weekday.slice(2,)
+        const wday=calculateWeekDay(new Date(document.getElementById('dateInput').value));
+        const wdayStr=wday.slice(2,)
         // prompt.innerText='正在处理，请等待。'
         const prompt=document.getElementById('prompt');
         prompt.innerText='正在写入日运表'
 
         const data={
             'date':date,
-            'weekday':wday,
+            'weekday':wdayStr,
             'color-mu':colorMu,
             'txt-mu':jxMu+txtMu,
             'color-huo':colorHuo,
