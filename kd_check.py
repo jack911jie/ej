@@ -21,7 +21,7 @@ import openpyxl
 from openpyxl.styles import Font, Color
 from openpyxl.utils import get_column_letter
 import numpy as np
-
+import json
 
 
 class FruitKd:
@@ -547,9 +547,75 @@ class FruitKd:
 
         print('已写入快递单号')
 
+class LocalProduct(FruitKd):
+    def __init__(self,chromedriver_path):
+        super().__init__(chromedriver_path)
+        with open(os.path.join(os.path.dirname(__file__),'configs','ktt.config'),'r',encoding='utf-8') as f:
+            self.sender_info=json.load(f)
         
+    def read_order_excel(self,fn):
+        df=pd.read_excel(fn,sheet_name='商品列表')
+        df['联系电话']=df['联系电话'].astype(str)
+        df=df[['商品','规格','数量','收货人','联系电话','详细地址','订单金额']]
+        return df
+    
+    def deal_order(self,good_name,fn,expand_accounts='yes'):
+        df=self.read_order_excel(fn)
+        df['发货人']=self.sender_info['发货人姓名']
+        df['发货人身份证号']=self.sender_info['发货人身份证号']
+        df['发货人电话']=self.sender_info['发货人电话']
+        if good_name:
+            df['商品']=good_name
+
+        try:
+            ptn=r'\d+g'
+            df['规格']=df['规格'].apply(lambda x: re.findall(ptn,x)[0])
+        except:
+            pass
+
+        if expand_accounts=='yes':
+            df_repeated=df.loc[df.index.repeat(df['数量'])]
+            df_repeated=df_repeated.reset_index(drop=True)
+            df_repeated['数量']=1
+
+            df_repeated['重复订单']=df_repeated.duplicated(subset='收货人',keep='first')
+            df_repeated.loc[df_repeated['重复订单'],'订单金额']=0
+            df_repeated.drop('重复订单',axis=1,inplace=True)
+
+            df_res=df_repeated
+        else:
+            df_res=df
+
+        df_res=df_res[['商品','规格','数量','收货人','联系电话','详细地址','发货人','发货人身份证号','发货人电话','订单金额']]
+        
+        return df_res
+
+    def send_to_producer(self,out_dir,good_name,fn,expand_accounts='yes'):
+        df=self.deal_order(good_name=good_name,fn=fn,expand_accounts=expand_accounts)
+        #按规格统计
+        df_grp=df.groupby('规格')['数量'].sum()
+        speciality_str = ' '.join([f'{spec}{count}件' for spec, count in df_grp.items()])
+
+        if not df.empty:
+            date_input=fn.split('\\')[-1].split('-')[0]
+            out_fn=os.path.join(out_dir,f'{date_input}-{good_name}-{speciality_str}.xlsx')
+            df.to_excel(out_fn,sheet_name='团团好果发货单',index=False)
+            os.startfile(out_dir)
+            print(f'完成。文件名：{out_fn}')
+            return {'res':'ok','data':df}
+        else:
+            print('数据为空')
+            return {'res':'failed','error':'empty data input'}
 
 if __name__=='__main__':
+    #龙眼干发货
+    p=LocalProduct(chromedriver_path='')
+    res=p.send_to_producer(out_dir='E:\\temp\\ejj\\团购群\\订单\\给果园的订单',
+                        good_name='广西红心牌龙眼干',
+                        expand_accounts='no',
+                        fn='E:\\temp\\ejj\\团购群\\订单\\20230922-桂圆肉-导出订单-01.xlsx')
+
+
     
     ##测试版块
     #顺丰：快递单号 r'SF\d{13}'
@@ -617,11 +683,11 @@ if __name__=='__main__':
     # 其他：申通查询http://kd.dh.cx/df66d，用手机号后4位，顺丰查询http://kd.dh.cx/36cd9，用整个手机号11位
 
     # 三、师院百香果返回的物流匹配快团团下载的待回传物流单号文件
-    p=FruitKd(chromedriver_path='')
-    p.shiyuan_format_to_wuliu(wuliu_company='中通快递',
-                                    guoyuan_back_fn='E:\\temp\\ejj\\团购群\\订单\\果园返单\\订单查询_20230824181755_8lbs4oek4800.xls',
-                                    ktt_dl_wuliu_empty_fn='E:\\temp\\ejj\\团购群\\订单\\wuliu2023-08-24 21_01_40.xlsx.xlsx',
-                                    output_to_upload_dir='E:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件')
+    # p=FruitKd(chromedriver_path='')
+    # p.shiyuan_format_to_wuliu(wuliu_company='中通快递',
+    #                                 guoyuan_back_fn='E:\\temp\\ejj\\团购群\\订单\\果园返单\\订单查询_20230824181755_8lbs4oek4800.xls',
+    #                                 ktt_dl_wuliu_empty_fn='E:\\temp\\ejj\\团购群\\订单\\wuliu2023-08-24 21_01_40.xlsx.xlsx',
+    #                                 output_to_upload_dir='E:\\temp\\ejj\\团购群\\订单\\带物流信息的回传文件')
 
 
 
