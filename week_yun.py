@@ -280,7 +280,7 @@ class ExportImage(WeekYun):
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             for num,wx in enumerate(['木','火','土','金','水']):
-                # print('正在生成 '+date_dir+' '+wx+'  穿搭')
+                print('正在生成 '+date_dir+' '+wx+'  穿搭')
                 res_draw_img_data=self.draw_img(date_input=nowtime,wx=wx,xls=xls)
                 # print(wx,res_draw_img_data)
                 if res_draw_img_data['res']=='ok':                    
@@ -343,7 +343,7 @@ class ExportWeekYunTxt(WeekYun):
                         dec_txt='佩戴'+'、'.join(dec_names[:-1])+'以及'+clrs[-1]+'的饰品。'
             #有饰品语句导入
             else:
-                dec_txt='佩戴'+self.import_dec_dic[date_input][wx]+'以及'+clrs[-1]+'的饰品。'
+                dec_txt='佩戴'+self.import_dec_dic['res_data'][date_input][wx]+'以及'+clrs[-1]+'的饰品。'
             
                 
             daycmt=self.day_cmt(date_input=date_input,xls=xls)
@@ -455,7 +455,7 @@ if __name__=='__main__':
     #######################  导出一周日穿搭文案   #######################
     # p=ExportWeekYunTxt()
     # p.all_wx_txt(date_input='20220822',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
-    # p.all_date_wx(prd=['20220822','20220828'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
+    # p.all_date_wx(prd=['20230924','20230924'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
 
 
     #######################  导出周运封图   #######################
@@ -474,7 +474,7 @@ if __name__=='__main__':
     p=ExportImage()
     # res=p.draw_img(date_input='20220828',wx='木',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
     # res.show()
-    res=p.batch_deal(prd=['20230404','20230404'],out_put_dir='e:\\temp\\ejj\日穿搭',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
+    # res=p.batch_deal(prd=['20230924','20230924'],out_put_dir='e:\\temp\\ejj\日穿搭',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
     # print(res)
   
 
