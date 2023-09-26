@@ -590,7 +590,7 @@ class LocalProduct(FruitKd):
         
         return df_res
 
-    def send_to_producer(self,out_dir,out_fn_prefix,good_name,fn,expand_accounts='yes'):
+    def send_to_producer(self,out_dir,out_fn_prefix,good_name,fn,expand_accounts='yes',open_dir='yes'):
         df=self.deal_order(good_name=good_name,fn=fn,expand_accounts=expand_accounts)
         #按规格统计
         df_grp=df.groupby('规格')['数量'].sum()
@@ -600,9 +600,10 @@ class LocalProduct(FruitKd):
             date_input=fn.split('\\')[-1].split('-')[0]
             out_fn=os.path.join(out_dir,f'{out_fn_prefix}-{date_input}-{good_name}-{speciality_str}.xlsx')
             df.to_excel(out_fn,sheet_name='团团好果发货单',index=False)
-            os.startfile(out_dir)
+            if open_dir=='yes':
+                os.startfile(out_dir)
             print(f'完成。文件名：{out_fn}')
-            return {'res':'ok','data':df}
+            return {'res':'ok','data':df,'filename':out_fn}
         else:
             print('数据为空')
             return {'res':'failed','error':'empty data input'}
