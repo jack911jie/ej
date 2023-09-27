@@ -552,16 +552,23 @@ class LocalProduct(FruitKd):
         super().__init__(chromedriver_path)
         with open(os.path.join(os.path.dirname(__file__),'configs','ktt.config'),'r',encoding='utf-8') as f:
             self.sender_info=json.load(f)
+        self.ice_bag_fn=r'd:\py\ej\configs\ktt_ice_bag.config'
         
     def read_order_excel(self,fn):
         df=pd.read_excel(fn,sheet_name='商品列表')
         df['联系电话']=df['联系电话'].astype(str)
-        df=df[['商品','规格','数量','收货人','联系电话','详细地址','订单金额']]
+        df=df[['订单号','商品','规格','数量','收货人','联系电话','详细地址','订单金额']]
         return df
     
-    def deal_order(self,good_name,fn,expand_accounts='yes'):
+    def deal_order(self,good_name,fn,format='fruit',check_ice_bag='no',expand_accounts='yes'):
         df=self.read_order_excel(fn)
-        df['发货人']=self.sender_info['发货人姓名']
+        if format=='local_product':
+            df['发货人']=self.sender_info['发货人姓名']
+        elif format=='fruit':
+            df['发货人']=self.sender_info['发货人昵称']
+        else:
+            df['发货人']=self.sender_info['发货人姓名']
+
         df['发货人身份证号']=self.sender_info['发货人身份证号']
         df['发货人电话']=self.sender_info['发货人电话']
         if good_name:
@@ -586,12 +593,40 @@ class LocalProduct(FruitKd):
         else:
             df_res=df
 
-        df_res=df_res[['商品','规格','数量','收货人','联系电话','详细地址','发货人','发货人身份证号','发货人电话','订单金额']]
+        
+        if format=='local_product':
+            df_res=df_res[['商品','规格','数量','收货人','联系电话','详细地址','发货人','发货人身份证号','发货人电话','订单金额']]
+        elif format=='fruit':
+            df_res.rename(columns={'发货人':'发件人姓名','发货人电话':'发件人手机','收货人':'收件人姓名','联系电话':'收件人手机','详细地址':'收件人地址','商品':'品名',},inplace=True)
+            # df_res.rename(columns={'发货人电话':'发件人手机'},inplace=True)
+            #发件人姓名	发件人手机	发件人电话	发件人地址	发件人单位	收件人姓名	收件人手机	收件人电话	收件人地址	收件人单位	品名	规格	数量	冰袋数量	备注	订单号	代收金额	到付金额
+            df_res['发件人电话']=''
+            df_res['收件人电话']=''
+            df_res['发件人地址']=''
+            df_res['发件人单位']=''
+            df_res['收件人单位']=''
+            
+            df_res['备注']=''
+            df_res['代收金额']=''
+            df_res['到付金额']=''
+            df_res['规格和地址']=df_res['规格']+'%'+df_res['收件人地址']
+
+            if check_ice_bag=='yes':
+                # df_order_out['冰袋数量']=df_order_out['规格和地址'].apply(lambda x: self.ice_bag_number(addr=x.split('%')[1],spec=x.str.split('%')[0],ice_bag_fn=ice_bag_fn))
+                df_res['冰袋数量']=df_res['规格和地址'].apply(lambda x: self.ice_bag_number_df(addr_spec=x,ice_bag_fn=self.ice_bag_fn))
+            else:
+                df_res['冰袋数量']=0
+            
+
+            df_res=df_res[['发件人姓名','发件人手机','发件人电话','发件人地址','发件人单位','收件人姓名','收件人手机','收件人电话','收件人地址','收件人单位','品名','规格','数量','冰袋数量','备注','订单号','代收金额','到付金额','订单金额']]
+        else:
+            df_res=df_res[['商品','规格','数量','收货人','联系电话','详细地址','发货人','发货人身份证号','发货人电话','订单金额']]
+        
         
         return df_res
 
-    def send_to_producer(self,out_dir,out_fn_prefix,good_name,fn,expand_accounts='yes',open_dir='yes'):
-        df=self.deal_order(good_name=good_name,fn=fn,expand_accounts=expand_accounts)
+    def send_to_producer(self,out_dir,out_fn_prefix,good_name,fn,good_format='local_product',check_ice_bag='no',expand_accounts='yes',open_dir='yes'):
+        df=self.deal_order(good_name=good_name,fn=fn,format=good_format,check_ice_bag=check_ice_bag,expand_accounts=expand_accounts)
         #按规格统计
         df_grp=df.groupby('规格')['数量'].sum()
         speciality_str = ' '.join([f'{spec}{count}件' for spec, count in df_grp.items()])
@@ -609,14 +644,23 @@ class LocalProduct(FruitKd):
             return {'res':'failed','error':'empty data input'}
 
 if __name__=='__main__':
-    #龙眼干发货
+    #龙眼干及其他水果发货
     p=LocalProduct(chromedriver_path='')
     res=p.send_to_producer(out_dir='E:\\temp\\ejj\\团购群\\订单\\给果园的订单',
                         out_fn_prefix='团团好果',
-                        good_name='广西红心牌龙眼干',                        
-                        expand_accounts='no',
-                        fn='E:\\temp\\ejj\\团购群\\订单\\20230922-桂圆肉-导出订单-01.xlsx')
-
+                        good_name='广西南丹红心猕猴桃',   
+                        good_format='local_product',      
+                        check_ice_bag='no',               
+                        expand_accounts='yes',
+                        fn='E:\\temp\\ejj\\团购群\\订单\\20230926-猕猴桃-导出订单-01.xlsx')
+    #参数说明：
+    # out_dir：输出文件夹
+    # out_fn_prefix：文件名的前缀
+    # good_name：商品名，出现在表格中的“商品名”列
+    # good_format：商品形式，local_product-土特产,fruit-水果。根据不同的类型生成不同的表格，土特产，为邮政要求的格式，即有发货人的真实姓名、身份证号，水果，则发货人对应为config文件中的发货人昵称，通常为团团好果。
+    # check_ice_bag：是否检查冰袋，通常只有荔枝需要设置为yes
+    # expand_accounts：对于购买多于1件的商品，根据实际数量生成相应的记录。例如同一客户购买了3件，同一条记录生成3条，防止商家发货漏单。
+    # fn：从快团团出导出并下载的表格
 
     
     ##测试版块
