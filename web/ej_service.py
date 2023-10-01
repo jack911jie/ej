@@ -129,7 +129,7 @@ class EjService(Flask):
             if res['res']=='ok':
                 dec_txt=res['res_data']
 
-                # print('\n正在处理每日穿搭配色文案\n')
+                print('\n正在处理每日穿搭配色文案\n')
                 week_txts=week_yun.ExportWeekYunTxt(work_dir=work_dir,import_dec_dic=dec_txt)
                 week_txts.all_date_wx(prd=prd,xls=xls,save_dir=eachday_output_dir,sense_word_judge=sense_word_judge)
 

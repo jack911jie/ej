@@ -326,13 +326,14 @@ class ExportWeekYunTxt(WeekYun):
             else:
                 clr_txt='建议穿'+'、'.join(clrs[:-1])+'以及'+clrs[-1]+'衣服，'
 
-            
+            # print(infos['饰品图地址'].tolist()[0].split(','))
             
             #佩戴饰品语句dec_txt
             #无饰品语句导入
             # print('self.import dec dic',self.import_dec_dic)
-            if self.import_dec_dic=='':
-                decs=infos['饰品图地址'].tolist()[0].split(',')
+   
+            if self.import_dec_dic=='':  
+                decs=infos['饰品图地址'].tolist()[0].split(',')                
                 dec_names=[x.split('\\')[-1].split('_')[1]+x.split('\\')[-1].split('_')[2] for x in decs]
                 for dec_name in dec_names:
                     if len(dec_names)==1:
@@ -343,9 +344,8 @@ class ExportWeekYunTxt(WeekYun):
                         dec_txt='佩戴'+'、'.join(dec_names[:-1])+'以及'+clrs[-1]+'的饰品。'
             #有饰品语句导入
             else:
-                dec_txt='佩戴'+self.import_dec_dic['res_data'][date_input][wx]+'以及'+clrs[-1]+'的饰品。'
-            
-                
+                dec_txt='佩戴'+self.import_dec_dic[date_input][wx]+'以及'+clrs[-1]+'的饰品。'
+
             daycmt=self.day_cmt(date_input=date_input,xls=xls)
             # print(date_input)
             df=pd.DataFrame()        
@@ -355,7 +355,7 @@ class ExportWeekYunTxt(WeekYun):
             df['描述']=daycmt[wx+'描述']
             df['五行']=wx
             wxtitle=wx+'宝宝'
-
+            
             title='【伊姐运程】'+datetime.strftime(df['日期'].tolist()[0],'%Y年%m月%d日')+'（星期'+df['星期'].tolist()[0]+'）运势|穿搭配色\n\n'+self.wx_icon('日历')+ \
                                     '  '+df['日期干支'].tolist()[0]+'\n'
 
@@ -369,6 +369,7 @@ class ExportWeekYunTxt(WeekYun):
                 save_dir='e:\\temp\\ejj\\日穿搭',sense_word_judge='yes'):        
         all_txt=''
         for wx in ['木','火','土','金','水']:
+          
             txts_res=self.exp_txt(date_input=date_input,wx=wx,xls=xls)
             txts=txts_res['res_data']
 
