@@ -65,6 +65,10 @@ class GanZhi:
             # for line in f.readlines():
             #     self.dic = json.loads(line)
             self.dic=json.load(f)
+        
+        with open(os.path.join(os.path.dirname(__file__),'ping_and_real_sun_time_adjust.json'),'r',encoding='utf-8',errors='ignore') as f_suntime: 
+            self.realsuntime_adjust=json.load(f_suntime)
+
     
     def only_tg(self,bz):
         bz=bz[::2]
@@ -424,17 +428,20 @@ class GanZhi:
         
         if real_sun_time=='yes':
             new_time=self.real_sun_time_transfer(y,m,d,h,min,long=longtitude)
-            y=int(new_time.year)
-            m=int(new_time.month)
-            d=int(new_time.day)
-            h=int(new_time.hour)
-            min=int(new_time.minute)
+
+            y=int(new_time['real_sun_time'].year)
+            m=int(new_time['real_sun_time'].month)
+            d=int(new_time['real_sun_time'].day)
+            h=int(new_time['real_sun_time'].hour)
+            min=int(new_time['real_sun_time'].minute)
             
 
-            res_real_sun_time=new_time.strftime('%Y-%m-%d %H:%M')
+            res_real_sun_time=new_time['real_sun_time'].strftime('%Y-%m-%d %H:%M')
+            res_ping_sun_time=new_time['ping_sun_time'].strftime('%Y-%m-%d %H:%M')
             # print('真太阳时：',res_real_sun_time)
         else:
-            res_real_sun_time='not calculate'
+            res_real_sun_time='real sun time not calculate'
+            res_ping_sun_time='ping sun time not calculate'
         
         
         # 因为23-0点涉及日期变动，先按输入参数校正
@@ -464,14 +471,15 @@ class GanZhi:
         else:
             realMon=dateGZ[3]
         
-        
+        # print(dateGZ)
+
         odr_mg=int(self.gzodr((odr_yg+1)*2+realMon,'g'))%10-1
         odr_mz=int(self.gzodr(dateGZ[3]+1,'z'))  #1月是丑月，列表从子开始，故+1
         
         logger.debug(['月序数：',odr_mg,odr_mz,'未按节气校正后的年干支序数：', \
                       odr_yg,odr_yz,dateGZ[3],realMon,(odr_yg+1)*2+realMon])
         
-        if m==1 and dateGZ[3]>10: #寅月前，算上一年
+        if m==1 and dateGZ[3]>10  or m==2 and dateGZ[3]==12: #寅月前，算上一年
             odr_yg=int(str(y-1-3)[-1])-1
 
             odr_yz=odr_yz-1
@@ -541,7 +549,7 @@ class GanZhi:
 #         print(res)
 
         
-        return {'bazi':res,'input_time':txt_input_time,'real_sun_time':res_real_sun_time}
+        return {'bazi':res,'input_time':txt_input_time,'real_sun_time':res_real_sun_time,'ping_sun_time':res_ping_sun_time}
 
     def gzodr(self,n,j): #校准超过10或12,或负数的天干地支序数
         if j=='g':
@@ -577,13 +585,24 @@ class GanZhi:
     def real_sun_time_transfer(self,y,m,d,h,min,long=120):
         old=datetime.strptime(str(y)+'-'+str(m)+'-'+str(d)+'-'+str(h)+'-'+str(min),'%Y-%m-%d-%H-%M')
         long_delta=(int(long)-120)*4*60
+        #平太阳时和真太阳时的差距
+        date_str=str(m).zfill(2)+str(d).zfill(2)
+        ping_real_delta=int(self.realsuntime_adjust[date_str])
+        
 
         if long_delta==abs(long_delta):
-            new_time=old+timedelta(seconds=abs(long_delta))
+            new_time=old+timedelta(seconds=abs(long_delta))            
         else:
             new_time=old-timedelta(seconds=abs(long_delta))
 
-        return new_time
+        if ping_real_delta==abs(ping_real_delta):
+            real_time=new_time+timedelta(seconds=abs(ping_real_delta))
+        else:
+            real_time=new_time-timedelta(seconds=abs(ping_real_delta))
+
+
+
+        return {'ping_sun_time':new_time,'real_sun_time':real_time}
 
     def dayun_days_transfer_new(self,start_date,delta):
         return start_date+timedelta(seconds=delta.total_seconds()*120)
@@ -697,6 +716,8 @@ class LiuYue(GanZhi):
         bazi=self.cal_dateGZ(y=y,m=m,d=d,h=h,min=min,zishi=0,real_sun_time=real_sun_time,longtitude=longtitude)
         dy=self.dayun(y=y,m=m,d=d,h=h,min=min,sex=sex,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,cal_mode=dy_mode)
         months=self.yue(y=which_year)
+
+        # print('bazi:',bazi)
         
         #目前的大运
         for dy_year in dy['dayun_list'][1]:
@@ -732,6 +753,7 @@ class LiuYue(GanZhi):
         mybz=self.bz_liuyue(which_year=yy,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
         my_this_year_liuyue=mybz['this_year_liuyue']
         # print(my_this_year_liuyue)
+        # print(mybz['liuyue'])
         res=[]
 
         
@@ -791,11 +813,13 @@ class LiuYue(GanZhi):
     def export_liuyue_xlsx(self,cus_name,yy,sex,y,m,d,h,min,zishi=0,real_sun_time='no',birth_place='',longtitude=120,dy_mode='old',cal_from='jan',out_dir='e:/temp/ejj/客户流年',show_mode='save'):
         print('\n正在排月运……',end='')
 
+        cus_bazi=self.cal_dateGZ(y=y,m=m,d=d,h=h,min=min,zishi=0,real_sun_time=real_sun_time,longtitude=longtitude)
+
         if cal_from=='jan':
             df_y_1=self.pai_liu_yue(yy=yy-1,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
             df_jan=df_y_1.iloc[[11]]
             df_y_this=self.pai_liu_yue(yy=yy,sex=sex,y=y,m=m,d=d,h=h,min=min,zishi=zishi,real_sun_time=real_sun_time,longtitude=longtitude,dy_mode=dy_mode)
-            df_feb_dec=df_y_this.iloc[1:,:]
+            df_feb_dec=df_y_this.iloc[0:,:]
             df_res=pd.concat([df_jan,df_feb_dec])
 
         else:
@@ -816,8 +840,8 @@ class LiuYue(GanZhi):
             save_name=os.path.join(save_dir,str(yy)+'-'+cus_name+'-'+sex_txt+'-流月.xlsx')
             df_res.to_excel(save_name,sheet_name='流月',index=False)
 
-            #格式
-            birth_info=[cus_name,sex,y,m,d,h,min,birth_place]
+            #客户信息
+            birth_info=[cus_name,sex,y,m,d,h,min,birth_place,'\n平太阳时：'+cus_bazi['ping_sun_time'],'\n真太阳时：'+cus_bazi['real_sun_time']]
             self.xlsx_format(src=save_name,birth_info=birth_info)
 
             print('完成。文件名：{}'.format(save_name))
@@ -836,7 +860,7 @@ class LiuYue(GanZhi):
             sex_txt='男'
 
         if birth_info[7]:
-            txt_a16=','.join([str(birth_info[0]),sex_txt,birthday,birth_info[7]])
+            txt_a16=','.join([str(birth_info[0]),sex_txt,birthday,birth_info[8],birth_info[9],'\n'+birth_info[7]])
         else:
             txt_a16=','.join([str(birth_info[0]),sex_txt,birthday])
 
@@ -855,7 +879,7 @@ class LiuYue(GanZhi):
         # sht.row_dimensions[13].height=38
 
         #列宽
-        sht.column_dimensions['a'].width=45
+        sht.column_dimensions['a'].width=55
         sht.column_dimensions['b'].width=11
         sht.column_dimensions['c'].width=11
         sht.column_dimensions['d'].width=11    
@@ -885,7 +909,8 @@ class LiuYue(GanZhi):
 
 if __name__=='__main__':
     bz=LiuYue()
-    bz.export_liuyue_xlsx('王懿彭',2023,'m',1988,8,16,19,10,zishi=0,real_sun_time='yes',birth_place='',longtitude=113,dy_mode='old',out_dir='e:/temp/ejj/客户流年',show_mode='save')
+    bz.export_liuyue_xlsx('测试',2024,'f',1981,2,4,3,15,zishi=0,real_sun_time='yes',birth_place='江苏南京',
+                            longtitude=119,dy_mode='old',out_dir='e:/temp/ejj/客户流年',show_mode='save')
 
     # mybz=bz.bz_liuyue(2023,'m',1980,5,23,2,10)
     # test=res['this_year_liuyue'][0]
