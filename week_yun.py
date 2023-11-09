@@ -456,7 +456,7 @@ if __name__=='__main__':
     #######################  导出一周日穿搭文案   #######################
     p=ExportWeekYunTxt()
     # p.all_wx_txt(date_input='20220822',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
-    p.all_date_wx(prd=['20231017','20231017'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
+    p.all_date_wx(prd=['20231027','20231027'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
 
 
     #######################  导出周运封图   #######################

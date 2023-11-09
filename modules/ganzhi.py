@@ -911,6 +911,11 @@ if __name__=='__main__':
     bz=LiuYue()
     bz.export_liuyue_xlsx('测试',2024,'f',1981,2,4,3,15,zishi=0,real_sun_time='yes',birth_place='江苏南京',
                             longtitude=119,dy_mode='old',out_dir='e:/temp/ejj/客户流年',show_mode='save')
+    # cal_from: jan：从1月-12月 否则按立春，从2月到次年1月
+    # dy_mode:大运的计算模式，
+    # new是简单的计算用秒计算，可能不准，
+    # old是根据传统的方法：按三天计为一岁行大运，即一天计四个月行大运、一个时辰计十天行大运
+    # run_ejj()
 
     # mybz=bz.bz_liuyue(2023,'m',1980,5,23,2,10)
     # test=res['this_year_liuyue'][0]
