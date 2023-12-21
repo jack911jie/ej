@@ -1,6 +1,8 @@
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),'modules'))
+from composing import TxtFormat
 import ganzhi
 import copy
 from PIL import Image,ImageFont,ImageDraw
@@ -10,6 +12,7 @@ import random
 import pandas as pd
 # pd.set_option('display.unicode.ambiguous_as_wide', True)
 pd.set_option('display.unicode.east_asian_width', True)
+import re
 
 class WeekYun:
     def __init__(self,work_dir='D:\\工作目录\\ejj'):
@@ -296,7 +299,7 @@ class ExportImage(WeekYun):
 
         return {'res':'ok','res_data':out_decs_txt}
 
-class ExportWeekYunTxt(WeekYun):
+class ExportWeekYunTxt(ExportImage):
     def __init__(self,work_dir='D:\\工作目录\\ejj',import_dec_dic=''):
         super(ExportWeekYunTxt,self).__init__(work_dir=work_dir)
         self.import_dec_dic=import_dec_dic
@@ -372,8 +375,33 @@ class ExportWeekYunTxt(WeekYun):
           
             txts_res=self.exp_txt(date_input=date_input,wx=wx,xls=xls)
             txts=txts_res['res_data']
+            
+
+            #抖音内容
+            dy_cover_date=txts_res['res_data'][0][6:17]
+            dy_cover_wd=txts_res['res_data'][0][17:22]
+            dy_page_date=txts_res['res_data'][0][6:24]
+            dy_page_lunar_date=txts_res['res_data'][0][-10:-1]
+
+            try:    
+                if wx=='木':
+                    dy_mu=re.findall(r'【.*',txts_res['res_data'][1])[0]
+                elif wx=='火':
+                    dy_huo=re.findall(r'【.*',txts_res['res_data'][1])[0]
+                elif wx=='土':
+                    dy_tu=re.findall(r'【.*',txts_res['res_data'][1])[0]
+                elif wx=='金':
+                    dy_jin=re.findall(r'【.*',txts_res['res_data'][1])[0]
+                elif wx=='水':
+                    dy_shui=re.findall(r'【.*',txts_res['res_data'][1])[0]
+                # else:
+                #     print(wx,'--找不到相描述')
+            except Exception as e:
+                print('生成抖音内容出错：', wx)
 
             all_txt+=txts[1]+'\n\n'
+
+        # print(dy_cover_date,dy_cover_wd,dy_page_date,dy_page_lunar_date,dy_mu,dy_huo,dy_tu,dy_jin,dy_shui)
         # print(all_txt)
         all_txt=txts[0]+'\n'+all_txt
 
@@ -405,8 +433,72 @@ class ExportWeekYunTxt(WeekYun):
             with open(os.path.join(save_dir,date_dir+'_日运.txt'),'w',encoding='utf-8') as f:
                 f.write(all_txt)
         
-        return all_txt
+        return {'riyun_all_txt':all_txt,'douyin_txt':[dy_cover_date,dy_cover_wd,dy_page_date,dy_page_lunar_date,dy_mu,dy_huo,dy_tu,dy_jin,dy_shui]}
     
+
+    def douyin(self,txt_lst,save_dir):
+        print('正在生成抖音图片内容')
+        dy_cover=Image.open(os.path.join(self.work_dir,'素材','抖音底图','抖音封面.jpg'))
+        dy_page=Image.open(os.path.join(self.work_dir,'素材','抖音底图','抖音内容.jpg'))
+
+        dy_date_cover=txt_lst[0]
+        dy_week_cover=txt_lst[1]
+        dy_page_title=txt_lst[2]
+        dy_page_lunar=txt_lst[3]
+        dy_mu_jx=txt_lst[4][:3]
+        dy_mu=txt_lst[4][3:]
+        dy_huo_jx=txt_lst[5][:3]
+        dy_huo=txt_lst[5][3:]
+        dy_tu_jx=txt_lst[6][:3]
+        dy_tu=txt_lst[6][3:]
+        dy_jin_jx=txt_lst[6][:3]
+        dy_jin=txt_lst[7][3:]
+        dy_shui_jx=txt_lst[6][:3]
+        dy_shui=txt_lst[8][3:]
+
+
+        draw_cover=ImageDraw.Draw(dy_cover)
+        draw_cover.text((336,150),text=dy_date_cover,fill='#7030a0',font=self.font('黑体',110))
+        draw_cover.text((444,310),text=dy_week_cover,fill='#7030a0',font=self.font('黑体',110))
+        
+        draw_page=ImageDraw.Draw(dy_page)
+        # temp_t='木宝宝今天是高光日，各种签约单子纷至沓来，考试、跳槽、找工作都能收到好消息。更开心的是今天桃花运也很好。'
+        draw_page.text((100,60),text=dy_page_title,fill='#4b11a4',font=self.font('黑体',56))
+        draw_page.text((170,154),text=dy_page_lunar,fill='#4b11a4',font=self.font('黑体',54))
+
+        #吉凶
+        draw_page.text((220,298),text=dy_mu_jx,fill='#01510a',font=self.font('黑体',36))
+        draw_page.text((220,618),text=dy_huo_jx,fill='#c00100',font=self.font('黑体',36))
+        draw_page.text((220,942),text=dy_tu_jx,fill='#885303',font=self.font('黑体',36))
+        draw_page.text((228,1260),text=dy_jin_jx,fill='#febe04',font=self.font('黑体',36))
+        draw_page.text((220,1578),text=dy_shui_jx,fill='#086bbf',font=self.font('黑体',36))
+        
+        #描述
+        TxtFormat().put_txt_img(draw=draw_page,tt=dy_mu,total_dis=956, \
+                                    xy=[112,368],dis_line=28,fill='#01510a', \
+                                    font_name='楷体',font_size=32,addSPC="yes")
+        TxtFormat().put_txt_img(draw=draw_page,tt=dy_huo,total_dis=956, \
+                                    xy=[112,688],dis_line=28,fill='#c00100', \
+                                    font_name='楷体',font_size=32,addSPC="yes")
+        TxtFormat().put_txt_img(draw=draw_page,tt=dy_tu,total_dis=956, \
+                                    xy=[112,1008],dis_line=28,fill='#885303', \
+                                    font_name='楷体',font_size=32,addSPC="yes")
+        TxtFormat().put_txt_img(draw=draw_page,tt=dy_jin,total_dis=956, \
+                                    xy=[112,1328],dis_line=28,fill='#febe04', \
+                                    font_name='楷体',font_size=32,addSPC="yes")
+        TxtFormat().put_txt_img(draw=draw_page,tt=dy_shui,total_dis=956, \
+                                    xy=[112,1648],dis_line=28,fill='#086bbf', \
+                                    font_name='楷体',font_size=32,addSPC="yes")
+ 
+
+        #保存
+        save_name_cover=os.path.join(save_dir,save_dir.split('\\')[-1]+'-抖音封面.jpg')
+        dy_cover.save(save_name_cover,quality=95,subsampling=0)
+        save_name_page=os.path.join(save_dir,save_dir.split('\\')[-1]+'-抖音内容.jpg')
+        dy_page.save(save_name_page,quality=95,subsampling=0)
+
+        # print('完成')        
+
     def all_date_wx(self,prd=['20220822','20220828'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',
                     save='yes',save_dir='e:\\temp\\ejj\\日穿搭',sense_word_judge='yes',import_dec_dic=''):
         stime,etime=datetime.strptime(prd[0],'%Y%m%d'),datetime.strptime(prd[1],'%Y%m%d')
@@ -417,9 +509,11 @@ class ExportWeekYunTxt(WeekYun):
         
         for nowtime in datelist:
             # print('正在处理 '+nowtime[:4]+'-'+nowtime[4:6]+'-'+nowtime[6:]+' 穿搭配色文案')
-            self.all_wx_txt(date_input=nowtime,xls=xls,save=save,save_dir=save_dir,sense_word_judge=sense_word_judge)
-        
+            res=self.all_wx_txt(date_input=nowtime,xls=xls,save=save,save_dir=save_dir,sense_word_judge=sense_word_judge)
+            self.douyin(txt_lst=res['douyin_txt'],save_dir=os.path.join(save_dir,nowtime[:4]+'-'+nowtime[4:6]+'-'+nowtime[6:]))
         print('完成')
+
+
 
 class WeekYunCover(ExportImage):
     def __init__(self,work_dir='D:\\工作目录\\ejj'):
@@ -448,15 +542,19 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #######################  一周日穿搭配色文案 + 周运封图   #######################
+    # p=ExportWeekYunTxt()
     # week_txts=ExportWeekYunTxt(work_dir='d:\\工作目录\\ejj')
-    # p.all_date_wx(prd=['20220822','20220828'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
+    # p.all_date_wx(prd=['20231219','20231219'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx')
 
 
 
     #######################  导出一周日穿搭文案   #######################
     p=ExportWeekYunTxt()
-    # p.all_wx_txt(date_input='20220822',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
-    p.all_date_wx(prd=['20231027','20231027'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
+    # res=p.all_wx_txt(date_input='20231219',xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
+    # p.douyin(res['douyin_txt'])
+    # p.douyin(txt_lst='')
+    # print(res)
+    p.all_date_wx(prd=['20231219','20231219'],xls='d:\\工作目录\\ejj\\运势\\运势.xlsx',save='yes',save_dir='e:\\temp\\ejj\\日穿搭')
 
 
     #######################  导出周运封图   #######################
