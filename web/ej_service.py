@@ -4,9 +4,10 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 import ganzhi
 import week_yun
+import ktt_order_export
 import pandas as pd
 import read_config
-from flask import Flask, request, Response,render_template,send_file,make_response
+from flask import Flask, request,jsonify, Response,render_template,send_file,make_response
 import zipfile
 import io
 from datetime import datetime
@@ -20,7 +21,18 @@ class EjService(Flask):
         super(EjService, self).__init__(*args, **kwargs)
         config_fn=os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'configs','ej_service.config')
         self.config_ej=read_config.read_json(config_fn)
+
+        #读取快团团有关配置文件
+        ktt_config=os.path.join(os.path.dirname(__file__),'config','ktt.config')
+        with open(ktt_config,'r',encoding='utf-8') as f:
+            self.ktt_config=json.loads(f.read())
+
+
+        # col_names_config=os.path.join(os.path.dirname(__file__),'config','ktt.config')
+        with open(self.ktt_config['col_config_fn'],'r',encoding='utf-8') as f:
+            self.config_ktt_order=json.loads(f.read())
         # print(self.config_ej)
+        # print(self.config_ktt_order.keys())
         
         #路由
         #渲染页面
@@ -29,6 +41,13 @@ class EjService(Flask):
 
         # 快团团
         self.add_url_rule('/ktt', view_func=self.ktt,methods=['GET','POST'])
+        #快团团导单
+        self.add_url_rule('/ktt_buy_list', view_func=self.ktt_buy_list_page,methods=['GET','POST'])
+        #处理快团团导单
+        self.add_url_rule('/ktt_deal_list', view_func=self.ktt_deal_list,methods=['GET','POST'])
+        # 快团团结果打包并返回前端
+        self.add_url_rule('/zip_and_download_ktt_exp_order', view_func=self.zip_and_download_ktt_exp_order,methods=['GET','POST'])
+
         #日运录入
         self.add_url_rule('/riyun_input_page',view_func=self.riyun_input_page,methods=['GET','POST'])
         
@@ -57,6 +76,37 @@ class EjService(Flask):
 
     def ktt(self):
         return render_template('/ktt.html')
+
+    def ktt_buy_list_page(self):
+        # print(list(self.config_ktt_order.keys()))
+        #读取config文件里的导单模板设置，并传送到前端
+        return render_template('/ktt_buy_list.html',expMode=list(self.config_ktt_order.keys()))
+
+    def ktt_deal_list(self):
+        data=request.json
+        try:
+            fn_info=data['fn_info'].split('，')
+        except:
+            fn_info=data['fn_info'].split(',')
+
+        exp_mode=data['exp_mode']
+        sender_name=data['sender_name']
+        sender_tel=data['sender_tel']
+        spec0=data['spec0']
+        buy_list0=data['buy_list0']
+        spec1=data['spec1']
+        buy_list1=data['buy_list1']
+        # odrs=[[spec0,buy_list0],[spec1,buy_list1]]
+        odrs=[]
+        if spec0 and buy_list0:
+            odrs.append([spec0,buy_list0])
+        if spec1 and buy_list1:
+            odrs.append([spec1,buy_list1])
+    
+
+        p=ktt_order_export.KttList()
+        res=p.multi_spec_output(supplier=exp_mode,sender_name=sender_name,sender_tel=sender_tel,odrs=odrs,save='yes',save_cfg=fn_info,save_dir=self.ktt_config['save_dir'])
+        return jsonify({'res':'ok'})
 
     def write_into_riyun_xlsx(self):
         print('writing into riyun xlsx')
@@ -214,6 +264,12 @@ class EjService(Flask):
                         mimetype='application/zip',
                         headers={'Content-Disposition': f'attachment;filename={output_filename}.zip'})
 
+    def zip_and_download_ktt_exp_order(self):
+        # prd_input=request.data.decode('utf-8')
+        tmp_fn=os.path.join('e:\\temp\\ktt\\exp_order','newfn.tmp')
+        with open (tmp_fn, 'r') as f:
+            newfn=f.read()
+        return send_file(os.path.join('e:\\temp\\ktt\\exp_order',newfn),as_attachment=True)
 
 class FERROR(Exception):
     pass

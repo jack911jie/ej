@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>快团团导单</title>
+        <link rel="stylesheet" href="../static/css/ej.css">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="background-color:#fffbf6">
+        <div><h4>文件名信息</h4></div>
+        <div><input id="fnInfo" value="团团好果，20240109，01，脆蜜金桔" style="height:30px;width:300px;">
+        </div>
+
+        <br>
+        <div>
+            <label for="expMode">导单模板</label>
+            <select id="expMode" style="width:60px;height:30px;">
+                {% for mode in expMode %}
+                    <option value="{{ mode }}">{{ mode }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div><h4>发货人</h4></div>
+        <div><input id="senderName" value='团团好果' style="height:30px;width:300px;">
+        </div>
+
+        <div><h4>发货人电话</h4></div>
+        <div><input id="senderTel" value='13707710616' style="height:30px;width:300px;">
+        </div>
+        
+        <hr>
+
+        <div><h4>规格一</h4></div>
+        <div><input id="spec0" style="height:30px;width:300px;" value="脆蜜果王家庭装【二】三斤">
+        </div>
+
+        <div><h4>详单一</h4>
+        <div><textarea id='buyList0' style="height:150px;width:300px;"></textarea></div>
+
+        <hr>
+        <div><h4>规格二</h4></div>
+        <div><input id="spec1" style="height:30px;width:300px;" value="脆蜜果王24个礼盒装">
+        </div>
+
+        <div><h4>详单二</h4>
+        <div><textarea id='buyList1' style="height:150px;width:300px;"></textarea></div>
+
+    
+        
+        <hr>
+        
+        <div id="dl" style="margin-top:10px;display: none;"><a href="{{ url_for('zip_and_download_ktt_exp_order') }}" onclick="hideDownload()">下载文件</a></div>
+        <br>
+        <div><button id="submit" onclick="submit()">导单</button></div>
+        <div id="result" style="color: #a9474b;"></div>
+
+
+
+    <script src="../static/js/common.js"></script>
+    <script>
+        function submit(){
+            const fnInfo=document.getElementById('fnInfo').value;
+            const expMode=document.getElementById('expMode').value;
+            const senderName=document.getElementById('senderName').value;
+            const senderTel=document.getElementById('senderTel').value;
+            const spec0=document.getElementById('spec0').value;
+            const buyList0=document.getElementById('buyList0').value;
+            const spec1=document.getElementById('spec1').value;
+            const buyList1=document.getElementById('buyList1').value;
+            // console.log(storedClassInfo);
+            const data={
+                'fn_info':fnInfo,
+                'exp_mode':expMode,
+                'sender_name':senderName,
+                'sender_tel':senderTel,
+                'spec0':spec0,
+                'buy_list0':buyList0,
+                'spec1':spec1,
+                'buy_list1':buyList1
+            }
+
+            fetch('/ktt_deal_list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(data)
+                    })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log(data['res']);    
+                      if(data['res']==='ok'){
+                        document.getElementById('dl').style.display='block';
+                        console.log('ktt download')     
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                      document.getElementById('dl').style.display='none';
+                      alert("提交失败，请稍后再试");
+                  });
+
+
+        }
+
+
+        function hideDownload(){
+            const dl=document.getElementById('dl');
+            // const prompt=document.getElementById('prompt');
+            // prompt.innerText='';
+            // prompt.style.display='block';
+            dl.style.display='none';
+        }
+
+
+    </script>
+    
+    </body>
