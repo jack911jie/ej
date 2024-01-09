@@ -8,7 +8,7 @@
     </head>
     <body style="background-color:#fffbf6">
         <div><h4>文件名信息</h4></div>
-        <div><input id="fnInfo" value="团团好果，20240109，01，脆蜜金桔" style="height:30px;width:300px;">
+        <div><input id="fnInfo"  style="height:30px;width:300px;">
         </div>
 
         <br>
@@ -59,6 +59,18 @@
 
     <script src="../static/js/common.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", function(){
+            const fnInfo=document.getElementById('fnInfo');
+            const todayStr=getTodayStr();
+            fnInfo.value="团团好果，"+todayStr+"，01，脆蜜金桔";
+            // console.log('start');
+            // console.log(todayStr,"团团好果，"+todayStr+"，01，脆蜜金桔");
+
+        });
+
+        
+
+
         function submit(){
             const fnInfo=document.getElementById('fnInfo').value;
             const expMode=document.getElementById('expMode').value;

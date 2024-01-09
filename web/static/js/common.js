@@ -232,3 +232,20 @@ function calculateWeekDay(dateInput){
 
     return weekDayChinese;
 }
+
+function getTodayStr(){
+    const today = new Date();
+
+    // 获取年、月、日
+    const year = today.getFullYear();
+    let month = today.getMonth() + 1; // 月份从0开始，需要加1
+    let day = today.getDate();
+
+    // 将月份和日期补零
+    month = month < 10 ? '0' + month : month;
+    day = day < 10 ? '0' + day : day;
+
+    // 拼接成所需的格式
+    const todayStr = year + month + day;
+    return todayStr
+}
