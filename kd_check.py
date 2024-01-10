@@ -17,6 +17,7 @@ import time
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 import copy
+import win32com.client
 import openpyxl
 from openpyxl.styles import Font, Color
 from openpyxl.utils import get_column_letter
@@ -555,7 +556,15 @@ class LocalProduct(FruitKd):
         self.ice_bag_fn=r'd:\py\ej\configs\ktt_ice_bag.config'
         
     def read_order_excel(self,fn):
-        df=pd.read_excel(fn,sheet_name='商品列表')
+        #去除快团团的密码，原来设置为7788.去除后才能读取
+        xlsApp=win32com.client.DispatchEx('Excel.Application')
+        xlsApp.EnableEvents=False
+        xlsApp.DisplayAlerts=False
+        xlwb=xlsApp.Workbooks.Open(fn,UpdateLinks=False, ReadOnly=False, Format=None, Password=7788, WriteResPassword='')
+        xlwb.SaveAs(fn,None,"","")
+        xlsApp.Quit()
+        
+        df=pd.read_excel(fn,sheet_name='商品列表',engine='openpyxl')
         df['联系电话']=df['联系电话'].astype(str)
         df=df[['订单号','商品','规格','数量','收货人','联系电话','详细地址','订单金额']]
         return df
