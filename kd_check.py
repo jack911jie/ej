@@ -19,7 +19,7 @@ pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 import copy
 import win32com.client
 import openpyxl
-from openpyxl.styles import Font, Color
+from openpyxl.styles import Font, Color,PatternFill,Alignment
 from openpyxl.utils import get_column_letter
 import numpy as np
 import json
@@ -554,6 +554,14 @@ class LocalProduct(FruitKd):
         with open(os.path.join(os.path.dirname(__file__),'configs','ktt.config'),'r',encoding='utf-8') as f:
             self.sender_info=json.load(f)
         self.ice_bag_fn=r'd:\py\ej\configs\ktt_ice_bag.config'
+
+        with open(self.sender_info['ktt_col_config'],'r',encoding='utf-8') as f_colnames:
+            self.col_names=json.load(f_colnames)
+
+        with open(os.path.join(os.path.dirname(__file__),'configs','col_map.config'),'r',encoding='utf-8') as f_map:
+            self.col_map_config=json.load(f_map)
+            
+
         
     def read_order_excel(self,fn):
         #去除快团团的密码，原来设置为7788.去除后才能读取
@@ -634,16 +642,53 @@ class LocalProduct(FruitKd):
         
         return df_res
 
-    def send_to_producer(self,out_dir,out_fn_prefix,good_name,fn,good_format='local_product',check_ice_bag='no',expand_accounts='yes',open_dir='yes'):
+    def send_to_producer(self,out_dir,out_fn_prefix,supplier,batch,good_name,fn,good_format='local_product',check_ice_bag='no',expand_accounts='yes',open_dir='yes'):
         df=self.deal_order(good_name=good_name,fn=fn,format=good_format,check_ice_bag=check_ice_bag,expand_accounts=expand_accounts)
+
+         #修改规格，快团团规格转换为提供给发货商的规格
+        try:
+            df['规格']=df['规格'].apply(lambda x: self.alter_spec(supplier,x))
+        except:
+            pass
+
+        #如有默认设置，则填入。
+        try:
+            for col in self.col_names[supplier]['col_default']:
+                df[col]=self.col_names[supplier]['col_default'][col]
+        except:
+            pass
+
         #按规格统计
         df_grp=df.groupby('规格')['数量'].sum()
-        speciality_str = ' '.join([f'{spec}{count}件' for spec, count in df_grp.items()])
+
+        #修改规格，快团团规格转换为提供给发货商的规格
+        speciality_str = ' '.join([f'{self.alter_spec(supplier,spec)} {count}件' for spec, count in df_grp.items()])
+        desc='\n'.join([f'{self.alter_spec(supplier,spec)} {count}件' for spec, count in df_grp.items()])
+        total_sum=str(df['数量'].sum())
+
+        #根据规格的种类数量写描述
+        values_count=len(df['规格'].value_counts())
+        if values_count>1:
+            desc= f'共{total_sum}件\n其中：'+desc
+
+
+        #修改格式时，将描述写入商品列下4行，定位商品单元格
+        good_name_row=df.shape[0]+4
+        good_name_col=int(self.col_names[supplier]['col_goodname'])+1
+
 
         if not df.empty:
             date_input=fn.split('\\')[-1].split('-')[0]
-            out_fn=os.path.join(out_dir,f'{out_fn_prefix}-{date_input}-{good_name}-{speciality_str}.xlsx')
-            df.to_excel(out_fn,sheet_name='团团好果发货单',index=False)
+            out_fn=os.path.join(out_dir,f'{out_fn_prefix}-{date_input}-{batch}-{good_name}-{speciality_str}.xlsx')
+
+            supplier_df=self.alter_supplier_format(supplier=supplier,df=df)
+            # print(supplier_df)
+
+            supplier_df.to_excel(out_fn,sheet_name='团团好果发货单',index=False)
+
+            #修改格式
+            self.xlsx_format(out_fn,desc=desc,desc_row=good_name_row,desc_col=good_name_col)
+
             if open_dir=='yes':
                 os.startfile(out_dir)
             print(f'完成。文件名：{out_fn}')
@@ -652,16 +697,97 @@ class LocalProduct(FruitKd):
             print('数据为空')
             return {'res':'failed','error':'empty data input'}
 
+
+    def xlsx_format(self,xlsx,desc,desc_row,desc_col):
+        wb=openpyxl.load_workbook(xlsx)
+        ws=wb.active
+
+        # for cell in ws[1]:
+            
+        #     font=Font(size=13,bold=True)
+        #     cell.font=font
+
+        font=Font(size=13,bold=True)
+        ws['A1'].font=font
+
+        ws.cell(desc_row,desc_col).value=desc
+        font=Font(bold=True)
+        ws.cell(desc_row,desc_col).font=font
+        yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+        ws.cell(desc_row,desc_col).fill=yellow_fill
+        ws.cell(desc_row,desc_col).alignment = Alignment(wrapText=True)
+
+        for cls in ['A','B','C','D','F','G','H','I']:
+            cell=ws[cls+'1']
+            font=Font(color='FF0000',bold=True)
+            cell.font=font
+
+        
+        #调整列宽
+        for cell in ws[1]:
+            max_length = 0
+            column_letter = get_column_letter(cell.column)
+            # print(column_letter,cell.value)
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+
+            if column_letter=='C':
+                adjusted_width = (max_length + 15) * 3.2
+            else:
+                adjusted_width = (max_length + 5) * 3.2
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        wb.save(xlsx)
+        # print('修改格式完成')
+
+    def alter_supplier_format(self,supplier,df):
+        supplier_col_names=self.col_names[supplier]['col_names']
+
+        #倒置map表的key和value
+        # reversed_map={}
+        # for key,value in self.col_names[supplier]['col_map2'].items():
+        #     reversed_map[value]=key
+
+
+        # col_names_map=self.col_names[supplier]['col_map2']
+        # old_cols=list(df.columns)
+        # print(old_cols)
+        newdf=pd.DataFrame(columns=supplier_col_names)
+        for col in supplier_col_names:
+            # print(col, self.col_names[supplier]['col_map2'][col])
+            try:
+                newdf[col]=df[self.col_names[supplier]['col_map2'][col]]
+            except:
+                pass
+
+        # print(newdf)
+        return newdf
+
+
+    def alter_spec(self,supplier,spec):
+        try:
+            new_spec=self.col_map_config[supplier][spec]
+        except:
+            new_spec=spec
+        # print(new_spec)
+        return new_spec
+
+
 if __name__=='__main__':
     #龙眼干及其他水果发货
     p=LocalProduct(chromedriver_path='')
     res=p.send_to_producer(out_dir='E:\\temp\\ejj\\团购群\\订单\\给果园的订单',
                         out_fn_prefix='团团好果',
-                        good_name='广西南丹红心猕猴桃',   
-                        good_format='local_product',      
+                        supplier='尚朴',
+                        batch='02',
+                        good_name='尚朴滑皮金桔',   
+                        good_format='fruit',      
                         check_ice_bag='no',               
                         expand_accounts='yes',
-                        fn='E:\\temp\\ejj\\团购群\\订单\\20230926-猕猴桃-导出订单-01.xlsx')
+                        fn='E:\\temp\\ejj\\团购群\\订单\\20240108-尚朴滑皮金桔-导出订单-01.xlsx')
     #参数说明：
     # out_dir：输出文件夹
     # out_fn_prefix：文件名的前缀
