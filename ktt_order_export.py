@@ -5,7 +5,7 @@ pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 import json
 from datetime import datetime
 import openpyxl
-from openpyxl.styles import Font, Color
+from openpyxl.styles import Font, Color,PatternFill,Alignment
 from openpyxl.utils import get_column_letter
 
 
@@ -134,6 +134,11 @@ class KttList:
         ws['A1'].font=font
 
         ws.cell(desc_row,desc_col).value=desc
+        font=Font(bold=True)
+        ws.cell(desc_row,desc_col).font=font
+        yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+        ws.cell(desc_row,desc_col).fill=yellow_fill
+        ws.cell(desc_row,desc_col).alignment = Alignment(wrapText=True)
 
         for cls in ['A','B','C','D','F','G','H','I']:
             cell=ws[cls+'1']
@@ -177,25 +182,25 @@ if __name__=='__main__':
     # res=p.dataframe_output('脆蜜金桔',infos)
     # print(res)
     # p.one_line(good_type='脆蜜金桔',rcv_name='王中',rcv_tel='13800001234',rcv_adr='广西南宁市',good_name='脆蜜果王家庭装【二】三斤',sender_name='团团好果',sender_tel='13717710616')
-    # sender_name='团团好果'
-    # sender_tel='13717710616'
-    # spec0='脆蜜果王家庭装【二】三斤'
-    # lst0='''
-    # 王中 13707710060 广西南宁市，2
-    # 王一 13899238593 广西玉林市，3
-    # 余女士 15921806296 上海市上海市宝山区纬地路88弄15号102,4
-    # '''
-    # spec1='滑皮家庭装【二】五斤'
-    # lst1='''
-    # 李中 13707710060 广西南宁市，1
-    # 李一 13899238593 广西玉林市，2
-    # 狗 15921806296 上海市上海市宝山区纬地路88弄15号102,2
-    # '''
+    sender_name='团团好果'
+    sender_tel='13717710616'
+    spec0='脆蜜果王家庭装【二】三斤'
+    lst0='''
+    王中 13707710060 广西南宁市，2
+    王一 13899238593 广西玉林市，3
+    余女士 15921806296 上海市上海市宝山区纬地路88弄15号102,4
+    '''
+    spec1='滑皮家庭装【二】五斤'
+    lst1='''
+    李中 13707710060 广西南宁市，1
+    李一 13899238593 广西玉林市，2
+    狗 15921806296 上海市上海市宝山区纬地路88弄15号102,2
+    '''
 
-    # odrs=[
-    #     [spec0,lst0]
-    # ]
+    odrs=[
+        [spec0,lst0]
+    ]
 
     # # res=p.output(good_type='脆蜜金桔',sender_name=sender_name,sender_tel=sender_tel,spec=spec,lst=lst)
     # # print(res)
-    # p.multi_spec_output(supplier='姐妹',sender_name=sender_name,sender_tel=sender_tel,odrs=odrs,save='yes',save_cfg=['团团好果','20240109','01','脆蜜金桔'],save_dir='e:\\temp')
+    p.multi_spec_output(supplier='姐妹',sender_name=sender_name,sender_tel=sender_tel,odrs=odrs,save='yes',save_cfg=['团团好果','20240109','01','脆蜜金桔'],save_dir='e:\\temp')

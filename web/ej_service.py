@@ -22,17 +22,24 @@ class EjService(Flask):
         config_fn=os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'configs','ej_service.config')
         self.config_ej=read_config.read_json(config_fn)
 
-        #读取快团团有关配置文件
+        #读取快团团有关配置文件存放路径
         ktt_config=os.path.join(os.path.dirname(__file__),'config','ktt.config')
         with open(ktt_config,'r',encoding='utf-8') as f:
             self.ktt_config=json.loads(f.read())
 
-
-        # col_names_config=os.path.join(os.path.dirname(__file__),'config','ktt.config')
+        # 读取不同发货商发货表的列名
         with open(self.ktt_config['col_config_fn'],'r',encoding='utf-8') as f:
             self.config_ktt_order=json.loads(f.read())
-        # print(self.config_ej)
-        # print(self.config_ktt_order.keys())
+
+        # 读取规格的默认名称返回前端
+        with open(self.ktt_config['page_config_fn'],'r',encoding='utf-8') as f:
+            config_page_default=json.loads(f.read())
+        self.spec0=config_page_default['spec0']
+        self.spec1=config_page_default['spec1']
+        self.fn_info=config_page_default['fn_info']
+        self.sender_name=config_page_default['sender_name']
+        self.sender_tel=config_page_default['sender_tel']
+        
         
         #路由
         #渲染页面
@@ -80,7 +87,12 @@ class EjService(Flask):
     def ktt_buy_list_page(self):
         # print(list(self.config_ktt_order.keys()))
         #读取config文件里的导单模板设置，并传送到前端
-        return render_template('/ktt_buy_list.html',expMode=list(self.config_ktt_order.keys()))
+        return render_template('/ktt_buy_list.html',expMode=list(self.config_ktt_order.keys()),
+                                                    specName0=self.spec0,specName1=self.spec1,
+                                                    senderNameDefault=self.sender_name,
+                                                    senderTelDefault=self.sender_tel,
+                                                    fnInfoDefault=self.fn_info)
+                                                    
 
     def ktt_deal_list(self):
         data=request.json

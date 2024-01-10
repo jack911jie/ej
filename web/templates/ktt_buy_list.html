@@ -8,7 +8,7 @@
     </head>
     <body style="background-color:#fffbf6">
         <div><h4>文件名信息</h4></div>
-        <div><input id="fnInfo"  style="height:30px;width:300px;">
+        <div><input id="fnInfo"  style="height:30px;width:300px;" value="{{fnInfoDefault}}">
         </div>
 
         <br>
@@ -22,17 +22,17 @@
         </div>
 
         <div><h4>发货人</h4></div>
-        <div><input id="senderName" value='团团好果' style="height:30px;width:300px;">
+        <div><input id="senderName" value="{{senderNameDefault}}" style="height:30px;width:300px;">
         </div>
 
         <div><h4>发货人电话</h4></div>
-        <div><input id="senderTel" value='13707710616' style="height:30px;width:300px;">
+        <div><input id="senderTel" value="{{senderTelDefault}}" style="height:30px;width:300px;">
         </div>
         
         <hr>
 
         <div><h4>规格一</h4></div>
-        <div><input id="spec0" style="height:30px;width:300px;" value="脆蜜果王家庭装【二】三斤">
+        <div><input id="spec0" style="height:30px;width:300px;" value="{{specName0}}">
         </div>
 
         <div><h4>详单一</h4>
@@ -40,7 +40,7 @@
 
         <hr>
         <div><h4>规格二</h4></div>
-        <div><input id="spec1" style="height:30px;width:300px;" value="脆蜜果王24个礼盒装">
+        <div><input id="spec1" style="height:30px;width:300px;" value="{{specName1}}">
         </div>
 
         <div><h4>详单二</h4>
@@ -62,9 +62,11 @@
         document.addEventListener("DOMContentLoaded", function(){
             const fnInfo=document.getElementById('fnInfo');
             const todayStr=getTodayStr();
-            fnInfo.value="团团好果，"+todayStr+"，01，脆蜜金桔";
+            // fnInfo.value="团团好果，"+todayStr+"，01，脆蜜金桔";
+            fnInfo.value=fnInfo.value.replace("$date$",todayStr)
             // console.log('start');
             // console.log(todayStr,"团团好果，"+todayStr+"，01，脆蜜金桔");
+            // console.log(specName0);
 
         });
 
