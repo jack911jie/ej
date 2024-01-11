@@ -558,7 +558,7 @@ class LocalProduct(FruitKd):
         with open(self.sender_info['ktt_col_config'],'r',encoding='utf-8') as f_colnames:
             self.col_names=json.load(f_colnames)
 
-        with open(os.path.join(os.path.dirname(__file__),'configs','col_map.config'),'r',encoding='utf-8') as f_map:
+        with open(self.sender_info['ktt_col_map_config'],'r',encoding='utf-8') as f_map:
             self.col_map_config=json.load(f_map)
             
 
