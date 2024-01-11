@@ -27,6 +27,10 @@ class EjService(Flask):
         with open(ktt_config,'r',encoding='utf-8') as f:
             self.ktt_config=json.loads(f.read())
 
+        #读取不同发货商导表时与快团团对应的规格名称
+        with open(self.ktt_config['ktt_col_map_config'],'r',encoding='utf-8') as f:
+            self.col_map_config=json.loads(f.read())
+
         # 读取不同发货商发货表的列名
         with open(self.ktt_config['col_config_fn'],'r',encoding='utf-8') as f:
             self.config_ktt_order=json.loads(f.read())
@@ -54,6 +58,9 @@ class EjService(Flask):
         self.add_url_rule('/ktt_deal_list', view_func=self.ktt_deal_list,methods=['GET','POST'])
         # 快团团结果打包并返回前端
         self.add_url_rule('/zip_and_download_ktt_exp_order', view_func=self.zip_and_download_ktt_exp_order,methods=['GET','POST'])
+        #获取不同供应商下的不同规格的在表格中的名称（与快团团名称有对应，但不一定相同）
+        self.add_url_rule('/ktt_return_spec', view_func=self.ktt_return_spec,methods=['GET','POST'])
+
 
         #日运录入
         self.add_url_rule('/riyun_input_page',view_func=self.riyun_input_page,methods=['GET','POST'])
@@ -87,11 +94,21 @@ class EjService(Flask):
     def ktt_buy_list_page(self):
         # print(list(self.config_ktt_order.keys()))
         #读取config文件里的导单模板设置，并传送到前端
+        # with open(self.ktt_config['ktt_col_map_config'],'r',encoding='utf-8') as f_colmap:
+        #     colmap_config=json.loads(f_colmap.read())
+        # # print(self.fn_info)
+        
+        #读取config文件里的导单模板设置，并传送到前端
         return render_template('/ktt_buy_list.html',expMode=list(self.config_ktt_order.keys()),
                                                     specName0=self.spec0,specName1=self.spec1,
                                                     senderNameDefault=self.sender_name,
                                                     senderTelDefault=self.sender_tel,
                                                     fnInfoDefault=self.fn_info)
+    def ktt_return_spec(self):
+        data=request.json
+        supplier=data['supplier']
+        specs=self.col_map_config[supplier]
+        return {'res':'ok','data':specs}     
                                                     
 
     def ktt_deal_list(self):

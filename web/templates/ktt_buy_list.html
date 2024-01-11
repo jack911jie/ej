@@ -14,7 +14,7 @@
         <br>
         <div>
             <label for="expMode">导单模板</label>
-            <select id="expMode" style="width:60px;height:30px;">
+            <select id="expMode" style="width:60px;height:30px;" onchange="fetchSpec()">
                 {% for mode in expMode %}
                     <option value="{{ mode }}">{{ mode }}</option>
                 {% endfor %}
@@ -67,8 +67,35 @@
             // console.log('start');
             // console.log(todayStr,"团团好果，"+todayStr+"，01，脆蜜金桔");
             // console.log(specName0);
+            fetchSpec();
 
         });
+
+        function fetchSpec(){
+            const supplier=document.getElementById("expMode").value;     
+            const data={"supplier":supplier}       
+            fetch('/ktt_return_spec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(data)
+                    })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log(data['res']);    
+                      if(data['res']==='ok'){
+                        console.log(data['data'])   
+                        const specArr=Object.values(data['data']);
+                        document.getElementById("spec0").value=specArr[0]?specArr[0]:"";
+                        document.getElementById("spec1").value=specArr[1]?specArr[1]:"";                        
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+
+        }
 
         
 
