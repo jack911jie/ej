@@ -119,6 +119,8 @@
             const buyList0=document.getElementById('buyList0').value;
             const spec1=document.getElementById('spec1').value;
             const buyList1=document.getElementById('buyList1').value;
+            const spec2=document.getElementById('spec2').value;
+            const buyList2=document.getElementById('buyList2').value;
             // console.log(storedClassInfo);
             const data={
                 'fn_info':fnInfo,
@@ -128,7 +130,9 @@
                 'spec0':spec0,
                 'buy_list0':buyList0,
                 'spec1':spec1,
-                'buy_list1':buyList1
+                'buy_list1':buyList1,
+                'spec2':spec2,
+                'buy_list2':buyList2
             }
 
             fetch('/ktt_deal_list', {

@@ -125,12 +125,16 @@ class EjService(Flask):
         buy_list0=data['buy_list0']
         spec1=data['spec1']
         buy_list1=data['buy_list1']
+        spec2=data['spec2']
+        buy_list2=data['buy_list2']
         # odrs=[[spec0,buy_list0],[spec1,buy_list1]]
         odrs=[]
         if spec0 and buy_list0:
             odrs.append([spec0,buy_list0])
         if spec1 and buy_list1:
             odrs.append([spec1,buy_list1])
+        if spec2 and buy_list2:
+            odrs.append([spec2,buy_list2])
     
 
         p=ktt_order_export.KttList()
