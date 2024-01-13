@@ -14,7 +14,7 @@
         <br>
         <div>
             <label for="expMode">导单模板</label>
-            <select id="expMode" style="width:60px;height:30px;" onchange="fetchSpec()">
+            <select id="expMode" style="width:80px;height:30px;" onchange="fetchSpec()">
                 {% for mode in expMode %}
                     <option value="{{ mode }}">{{ mode }}</option>
                 {% endfor %}
@@ -45,6 +45,14 @@
 
         <div><h4>详单二</h4>
         <div><textarea id='buyList1' style="height:150px;width:300px;"></textarea></div>
+
+        <hr>
+        <div><h4>规格三</h4></div>
+        <div><input id="spec2" style="height:30px;width:300px;" value="{{specName1}}">
+        </div>
+
+        <div><h4>详单三</h4>
+        <div><textarea id='buyList2' style="height:150px;width:300px;"></textarea></div>
 
     
         
@@ -88,7 +96,9 @@
                         console.log(data['data'])   
                         const specArr=Object.values(data['data']);
                         document.getElementById("spec0").value=specArr[0]?specArr[0]:"";
-                        document.getElementById("spec1").value=specArr[1]?specArr[1]:"";                        
+                        document.getElementById("spec1").value=specArr[1]?specArr[1]:"";    
+                        document.getElementById("spec2").value=specArr[2]?specArr[2]:"";                         
+                                           
                       }
                   })
                   .catch(error => {
