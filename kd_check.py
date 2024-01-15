@@ -692,6 +692,8 @@ class LocalProduct(FruitKd):
             if open_dir=='yes':
                 os.startfile(out_dir)
             print(f'完成。文件名：{out_fn}')
+            wx_txt=f'{date_input} 第{batch}批 {good_name} {speciality_str}'
+            print(wx_txt)
             return {'res':'ok','data':df,'filename':out_fn}
         else:
             print('数据为空')

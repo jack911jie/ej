@@ -119,7 +119,7 @@ class KttList:
 
             self.xlsx_format(save_fn,desc=xlsx_desc,desc_row=total_count+4,desc_col=res['spec_col']+1)
         
-        return out_df
+        return {'res':out_df,'wx_txt':fn_str}
 
     def xlsx_format(self,xlsx,desc,desc_row,desc_col):
         wb=openpyxl.load_workbook(xlsx)

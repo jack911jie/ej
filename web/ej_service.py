@@ -139,7 +139,7 @@ class EjService(Flask):
 
         p=ktt_order_export.KttList()
         res=p.multi_spec_output(supplier=exp_mode,sender_name=sender_name,sender_tel=sender_tel,odrs=odrs,save='yes',save_cfg=fn_info,save_dir=self.ktt_config['save_dir'])
-        return jsonify({'res':'ok'})
+        return jsonify({'res':'ok','wx_txt':res['wx_txt']})
 
     def write_into_riyun_xlsx(self):
         print('writing into riyun xlsx')

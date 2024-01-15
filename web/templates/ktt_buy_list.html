@@ -59,6 +59,7 @@
         <hr>
         
         <div id="dl" style="margin-top:10px;display: none;"><a href="{{ url_for('zip_and_download_ktt_exp_order') }}" onclick="hideDownload()">下载文件</a></div>
+        <div id="wxTxt" style="margin-top:10px;"></div>
         <br>
         <div><button id="submit" onclick="submit()">导单</button></div>
         <div id="result" style="color: #a9474b;"></div>
@@ -121,6 +122,9 @@
             const buyList1=document.getElementById('buyList1').value;
             const spec2=document.getElementById('spec2').value;
             const buyList2=document.getElementById('buyList2').value;
+            const wxTxt=document.getElementById('wxTxt')
+
+            wxTxt.value='';
             // console.log(storedClassInfo);
             const data={
                 'fn_info':fnInfo,
@@ -144,9 +148,11 @@
                     })
                   .then(response => response.json())
                   .then(data => {
-                      console.log(data['res']);    
+                      console.log(data);    
                       if(data['res']==='ok'){
                         document.getElementById('dl').style.display='block';
+                        wxMsg=fnInfo.split('，');
+                        wxTxt.innerText=wxMsg[1]+' 第'+wxMsg[2]+'批 '+wxMsg[3]+' '+data['wx_txt'];
                         console.log('ktt download')     
                       }
                   })
