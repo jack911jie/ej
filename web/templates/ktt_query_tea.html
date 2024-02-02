@@ -6,7 +6,7 @@
         <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="background-color:#fffbf6">
+    <body style="background-color:#fff8f6">
         <div id="title"><h2>查询库存</h2></div>       
         
        
@@ -23,18 +23,44 @@
         let productIdProducerDic={};
         let stocksData;
         document.addEventListener("DOMContentLoaded", function(){       
-            // Promise.all([fetchProductsStocks()])
-            // .then(values=>{
-            //     stocksData=values[0];
-            //     displayStocks();
-            // })
-            // .catch(error => {
-            //     console.error('Error:', error);                      
-            // });
+            Promise.all([fetchProductsStocks(),fetchProduct()])
+            .then(values=>{
+                stocksData=values[0];
+                productIdProducerDic=values[1];
+                console.log(productIdProducerDic)
+                displayStocks();
+            })
+            .catch(error => {
+                console.error('Error:', error);                      
+            });
 
-            fetchProductsStocks();
+            // fetchProductsStocks();
             
         });
+
+        function fetchProduct(){
+            return fetch('/ktt_fetch_product')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data['res']);    
+                        if(data['res']==='ok'){                        
+                            let productList=[];
+                            console.log(data['products'])
+                            data['products'].forEach(element => {
+                                productList.push(element)
+                            });                    
+                            const productSel=document.getElementById('productSelect');
+                            productList.forEach(productItem=>{              
+                                productIdNameDic[productItem[0]]=productItem[1];
+                                productIdProducerDic[productItem[0]]=productItem[2];
+                            });                        
+                            return productIdProducerDic;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);                      
+                    });
+        }
 
         function fetchProductsStocks(){
             return fetch('/ktt_stat_deal')
@@ -46,7 +72,7 @@
                         
                         }
                         stocksData=data['stocks'];
-                        displayStocks();
+                        // displayStocks();
                         return data['stocks']
                     })
                     .catch(error => {
@@ -57,7 +83,9 @@
         function displayStocks(){
             let divs=''
             stocksData.forEach(stk => {
-                const div=`<div> <h3><span style='color:red;'>${stk[1]}</span>  <span style='font-size:12px;'>单位：克（g）</span></h3></div>
+                const div=`<div> <h3><span style='color:red;'>${stk[1]}</span> 
+                                <span style='font-size:13px;color:#ba5858;'>${productIdProducerDic[stk[0]]}</span>
+                                 <span style='font-size:10px;'>单位：克（g）</span></h3></div>
                             <div> 库  存：${stk[2]} g</div>
                             <div> 已出库：${stk[3]} g</div>
                             <div> 剩  余：${stk[4]} g</div>
