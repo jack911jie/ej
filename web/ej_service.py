@@ -13,6 +13,7 @@ import io
 from datetime import datetime
 import json
 import xlwings as xw
+import pymysql
 
 
 class EjService(Flask):
@@ -60,7 +61,30 @@ class EjService(Flask):
         self.add_url_rule('/zip_and_download_ktt_exp_order', view_func=self.zip_and_download_ktt_exp_order,methods=['GET','POST'])
         #获取不同供应商下的不同规格的在表格中的名称（与快团团名称有对应，但不一定相同）
         self.add_url_rule('/ktt_return_spec', view_func=self.ktt_return_spec,methods=['GET','POST'])
+        #渲染茶叶入库页面
+        self.add_url_rule('/ktt_purchase_tea', view_func=self.ktt_purchase_tea_page,methods=['GET','POST'])
+        #渲染茶叶出库页面
+        self.add_url_rule('/ktt_sale_tea', view_func=self.ktt_sale_tea_page,methods=['GET','POST'])
+        #渲染茶叶查询页面
+        self.add_url_rule('/ktt_query_tea', view_func=self.ktt_query_tea_page,methods=['GET','POST'])
+        #渲染茶叶菜单页面
+        self.add_url_rule('/ktt_tea_menu', view_func=self.ktt_tea_menu_page,methods=['GET','POST'])
 
+        #处理前端
+        #获取操作人信息
+        self.add_url_rule('/ktt_fetch_opr', view_func=self.ktt_fetch_opr,methods=['GET','POST'])
+        #获取产品列表
+        self.add_url_rule('/ktt_fetch_product', view_func=self.ktt_fetch_product,methods=['GET','POST'])
+        #获取规格列表
+        self.add_url_rule('/ktt_fetch_specs', view_func=self.ktt_fetch_specs,methods=['GET','POST'])
+        #处理入库
+        self.add_url_rule('/ktt_purchase_deal',view_func=self.ktt_purchase_deal,methods=['GET','POST'])
+        #处理出库
+        self.add_url_rule('/ktt_sale_deal',view_func=self.ktt_sale_deal,methods=['GET','POST'])
+        #返回统计剩余数量        
+        self.add_url_rule('/ktt_stat_deal',view_func=self.ktt_stat_deal,methods=['GET','POST'])
+        #获取包装列表
+        self.add_url_rule('/ktt_fetch_pkgs', view_func=self.ktt_fetch_pkgs,methods=['GET','POST'])        
 
         #日运录入
         self.add_url_rule('/riyun_input_page',view_func=self.riyun_input_page,methods=['GET','POST'])
@@ -79,6 +103,215 @@ class EjService(Flask):
         self.add_url_rule('/riyun_menu', view_func=self.riyun_menu,methods=['GET','POST'])
 
 
+    def connect_mysql(self):
+        with open(os.path.join(os.path.dirname(os.path.realpath((__file__))),'config','db.config'),'r',encoding='utf-8') as f:
+            cfg=json.load(f)
+        # 连接数据库
+        conn = pymysql.connect(
+            host=cfg['host'],       # 数据库主机地址
+            user=cfg['user'],     # 数据库用户名
+            password=cfg['password'], # 数据库密码
+            database=cfg['database'],  # 要连接的数据库名称
+            port=cfg['port']
+        )
+
+        return conn
+    
+    def ktt_tea_menu_page(self):
+        return render_template('/ktt_tea_menu.html')
+
+    def ktt_query_tea_page(self):
+        return render_template('/ktt_query_tea.html')
+
+    def ktt_sale_tea_page(self):
+        return render_template('/ktt_sale_tea.html')
+
+    def ktt_purchase_tea_page(self):
+        return render_template('/ktt_purchase_tea.html')
+    
+    def ktt_purchase_deal(self):
+        data=request.json
+        # print(data)
+        conn=self.connect_mysql();
+        cursor=conn.cursor();
+        try:
+            sql=f'select goods_id,goods_type,goods_name,goods_name2,goods_producer from products where goods_id=%s'
+            print(data['product_id'])
+            cursor.execute(sql,data['product_id'])
+            product_info=cursor.fetchall()
+            print(product_info)
+            goods_id=data['product_id']
+            goods_type=product_info[0][1]
+            goods_name=product_info[0][2]
+            cmt=data['cmt'] 
+            total_price=data['total_price']
+            flow_in_time=data['date_time']
+            opr_name=data['opr_name']
+            goods_unit=data['product_unit']
+            current_time=datetime.now()
+            opr_time=current_time.strftime('%Y-%m-%d %H:%M:%S')
+            print(current_time,opr_time)
+
+            print(goods_unit)
+            if goods_unit=='g':
+                # goods_unit=data['product_unit']
+                goods_unit2=goods_unit
+                goods_price=data['price']
+                qty2=qty=data['qty']
+        
+            else:
+                equal_g=data['equal_g']
+                qty2=data['qty']
+                qty=float(qty2)*float(equal_g)
+
+                goods_price=float(total_price)/float(qty);
+                goods_unit2=data['product_unit']
+                goods_unit='g'
+
+            values=(goods_id,goods_type,goods_name,goods_unit,qty,goods_price,total_price,goods_unit2,qty2,cmt,flow_in_time,opr_name,opr_time)
+            print(values)
+
+            print('qty2:',qty2)
+
+            sql=f'''
+                 insert into flow_purchase (goods_id,goods_type,goods_name,goods_unit,qty,goods_price,total_price,goods_unit2,qty2,cmt,flow_in_time,opr_name,opr_time) 
+                 values 
+                 (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            '''
+            cursor.execute(sql,values)
+            conn.commit()
+            cursor.close()
+            conn.close()     
+            return  jsonify({'res':'ok','prompt':(flow_in_time,goods_name,qty2,goods_unit2,opr_name)})    
+            
+        except Exception as e:
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+
+
+
+        return {'res':'ok'}
+
+    def ktt_sale_deal(self):
+        data=request.json
+        # print(data)
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        try:
+            sql=f'select spec_id,spec_unit,spec_name,goods_type,goods_type2,pkg_list from specs where spec_id=%s'
+            # print(data['spec_id'])
+            cursor.execute(sql,data['spec_id'])
+            spec_info=cursor.fetchone()
+            ####################################
+            # 写入flow_sale表中，即销售流水，按销售规格记录：
+            # id, goods_type, spec_id, spec_name, spec_unit, qty, spec_price, total_spec_price, use_for, cmt, sale_time, opr_name, opr_time
+            # print(spec_info)
+            goods_type=spec_info[3]
+            spec_id=spec_info[0]
+            spec_name=spec_info[2]
+            spec_unit=spec_info[1]
+            qty=data['qty']
+            spec_price=data['price']
+            total_price=data['total_price']
+            use_for=data['use_for']
+            cmt=data['cmt']
+            sale_time=data['date_time']
+            opr_name=data['opr_name']
+            current_time=datetime.now()
+            opr_time=current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+            values=(goods_type, spec_id, spec_name, spec_unit, qty, spec_price, total_price, use_for, cmt, sale_time, opr_name, opr_time)
+
+            sql=f'''
+                insert into flow_sale (goods_type, spec_id, spec_name, spec_unit, qty, spec_price, total_spec_price, use_for, cmt, sale_time, opr_name, opr_time) 
+                values 
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            '''
+            cursor.execute(sql,values)
+            # conn.commit()
+
+            ####################################
+            # 写入flow_sale_product表中，也是销售流水，按进货的规格记录（通常为克（g)）
+            # id, goods_id, goods_name, pkg_name, goods_unit, goods_qty, use_for, cmt, sale_time, opr_name, opr_time
+            pkg_list=spec_info[5]
+            pkgs=pkg_list.split(';')[:-1]
+            for pkg in pkgs:
+                
+                pkg_id=pkg.split(',')[0]
+                pkg_qty=float(pkg.split(',')[1])
+                sql=f'select goods_list,pkg_name from packages where pkg_id=%s'
+                cursor.execute(sql,pkg_id)
+                goods_list=cursor.fetchone()
+                sql=f'select goods_name,goods_name2,wt_unit from products where goods_id=%s'
+                # print(goods_list)
+                product_info=goods_list[0].split(';')[0].split(',')
+                goods_id=product_info[0]
+                # print(goods_id)
+                cursor.execute(sql,goods_id)
+                goods_info=cursor.fetchone()
+                # print(goods_info)
+                goods_name=goods_info[0]
+                pkg_name=goods_list[1]
+                goods_unit=goods_info[2]
+                #总克数=每小包克数*小包数*规格数
+                goods_qty=float(product_info[1])*pkg_qty*float(qty)
+                # use_for
+                # cmt
+                # sale_time
+                # opr_name
+                # opr_time
+                values=(goods_id,goods_name,pkg_name,goods_unit,goods_qty,use_for,cmt,sale_time,opr_name,opr_time)
+                sql=f'''
+                    insert into flow_sale_product (goods_id, goods_name, pkg_name, goods_unit, goods_qty, use_for, cmt, sale_time, opr_name, opr_time) 
+                    values 
+                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                '''
+                cursor.execute(sql,values)
+
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+            conn.rollback()
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+
+
+
+        return {'res':'ok','prompt':(sale_time,spec_name,qty,spec_unit,opr_name)}
+    
+    #计算库存
+    def ktt_stat_deal(self):
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        try:
+            sql=f'''
+                SELECT 
+                p.goods_id, p.goods_name, SUM(p.qty) AS total_purchase_qty, 
+                COALESCE((SELECT SUM(s.goods_qty) FROM flow_sale_product s WHERE s.goods_id = p.goods_id), 0) AS total_sale_qty, 
+                (SUM(p.qty) - COALESCE((SELECT SUM(s.goods_qty) FROM flow_sale_product s WHERE s.goods_id = p.goods_id), 0)) AS current_stock 
+                FROM flow_purchase p 
+                GROUP BY p.goods_id, p.goods_name
+            '''
+            cursor.execute(sql)
+            res=cursor.fetchall()
+            print(res)            
+            return jsonify({'res':'ok','stocks':res})
+
+        except Exception as e:
+            conn.rollback()
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+        
+
     def riyun_input_page(self):
         return render_template('/riyun_input.html')
 
@@ -90,6 +323,84 @@ class EjService(Flask):
 
     def ktt(self):
         return render_template('/ktt.html')
+
+    #获取商品规格
+    def ktt_fetch_specs(self):
+        print('connecting database specs...')
+        conn=self.connect_mysql();
+        cursor=conn.cursor();
+        try: 
+            #如果没有记录，写入salt值，如有，更新。
+            sql=f'select spec_id,spec_unit,spec_name,goods_type,goods_type2,pkg_list from specs'
+            cursor.execute(sql)
+            res=cursor.fetchall()
+            print(res)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'ok','specs':res})   
+        except Exception as e:
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+
+    #获取人员列表
+    def ktt_fetch_opr(self):
+        # print('connecting database...')
+        conn=self.connect_mysql();
+        cursor=conn.cursor();
+        try: 
+            #如果没有记录，写入salt值，如有，更新。
+            sql=f'select opr_id,opr_name from opr'
+            cursor.execute(sql)
+            res=cursor.fetchall()
+            print(res)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'ok','opr':res})   
+        except Exception as e:
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+
+    #获取包装列表
+    def ktt_fetch_pkgs(self):
+        print('connecting database...')
+        conn=self.connect_mysql();
+        cursor=conn.cursor();
+        try: 
+            sql=f'select pkg_id,pkg_name,goods_list from packages'
+            cursor.execute(sql)
+            res=cursor.fetchall()
+            # print(res)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'ok','pkgs':res})   
+        except Exception as e:
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+
+    #获取产品列表
+    def ktt_fetch_product(self):
+        print('connecting database...')
+        conn=self.connect_mysql();
+        cursor=conn.cursor();
+        try: 
+            sql=f'select goods_id,goods_name,goods_producer from products'
+            cursor.execute(sql)
+            res=cursor.fetchall()
+            print(res)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'ok','products':res})   
+        except Exception as e:
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
 
     def ktt_buy_list_page(self):
         # print(list(self.config_ktt_order.keys()))

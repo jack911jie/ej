@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>团团好果好物入库</title>
+        <link rel="stylesheet" href="../static/css/ej.css">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="background-color:#fffbf6">
+        <div><h4>入库时间</h4></div>
+        <div><input id="purchaseDateTime" type="datetime-local" style="height:30px;width:150px;">
+        </div>
+
+        <div>
+            <h4>入库人
+            <span><select id='oprNameSelect'>
+                
+            </select></span>
+        </h4>
+        </div>
+
+        <div>
+            <h4>入库货品
+            <span><select id='productSelect' onchange="displayProducer()">                
+            </select></span>
+            </h4>
+        </div>
+
+        <div>
+            <h4>生产商：
+                <span id="producerName"></span>
+            </h4>
+        </div>
+
+        <div>
+            <h4>单位
+            <span><select id='productUnit' onchange="showTransUnit()">      
+                <option value="g" selected>克</option>      
+                <option value="盒">盒</option> 
+                <option value="砖">砖</option> 
+
+            </select></span>
+
+            <span id="equalG" style="display: none;">每 <span id="selectedUnit"></span>为 <input id="gperbox" style="width:50px;" onchange="fillCmt()"> 克</span>
+            </h4>
+        </div>
+
+        
+
+        <div>
+            <h4>单价
+                <input id="price" style="width:50px;" type="number" step="0.01" onchange="autoCalPrice()"> 元
+            </h4>
+        </div>
+
+        <div>
+            <h4>数量
+            <input id="qty" style="width:50px;" onchange="autoCalPrice()">
+            </h4>
+        </div>
+
+        <div>
+            <h4>总金额
+            <input id="totalPrice" style="width:50px;" type="number" step="0.01"> 元
+            </h4>
+        </div>
+
+
+        <div>
+            <h4>备注
+            <input id="cmt" style="width:200px;" type="text" > 
+            </h4>
+        </div>
+
+
+    
+        
+        <hr>
+        <div>
+            <div id="info"></div>
+        </div>
+       
+        <br>
+        <div><button id="submit" onclick="submit()">入库</button></div>
+        <br>
+        <div><a href="./ktt_tea_menu">返回主菜单</a></div>
+
+
+
+    <script src="../static/js/common.js"></script>
+    <script>
+        let productIdNameDic={};       
+        let productIdProducerDic={};
+        document.addEventListener("DOMContentLoaded", function(){     
+            selectToday('purchaseDateTime','dateTime');            
+            fetchOpr();
+            fetchProduct();
+            
+        });
+
+        function showTransUnit(){
+            const unit=document.getElementById('productUnit');
+            const showGUnit=document.getElementById('equalG');
+            const selectedUnit=document.getElementById('selectedUnit');
+            const cmt=document.getElementById('cmt');
+            if(unit.value!=='g'){
+                showGUnit.style.display='block';
+                selectedUnit.innerText=unit.value;
+                
+
+            }else{
+                showGUnit.style.display='none';
+                selectedUnit.innerText='';
+                cmt.placeholder='';
+                cmt.value='';
+            }
+        }
+
+        function fillCmt(){
+            const unit=document.getElementById('productUnit');
+            const cmt=document.getElementById('cmt');
+            if(unit.value!=='g'){
+                cmt.placeholder='每'+unit.value+'为'+String(document.getElementById('gperbox').value)+'克';
+                cmt.value='每'+unit.value+'为'+String(document.getElementById('gperbox').value)+'克';
+            }else{
+                cmt.placeholder='';
+                cmt.value='';
+            }
+            
+        }
+
+        function fetchOpr(){
+            fetch('/ktt_fetch_opr')
+                  .then(response => response.json())
+                  .then(data => {
+                    //   console.log(data['res']);    
+                      if(data['res']==='ok'){
+                        let oprList=[];
+                        data['opr'].forEach(element => {
+                            oprList.push(element[1])
+                        });        
+                        // console.log(oprList)      
+                        const oprSel=document.getElementById('oprNameSelect');
+                        oprList.forEach(oprName=>{
+                            const oprOption=document.createElement('option');
+                            oprOption.value=oprName;
+                            oprOption.text=oprName;
+                            oprSel.appendChild(oprOption);
+                        });
+                                           
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+
+        }
+
+        function displayProducer(){
+            const productId=document.getElementById('productSelect').value;
+            console.log(productId)
+            const producerName=document.getElementById('producerName');
+            producerName.innerText=productIdProducerDic[productId];
+            
+        }
+
+        function fetchProduct(){
+            fetch('/ktt_fetch_product')
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log(data['res']);    
+                      if(data['res']==='ok'){                        
+                        let productList=[];
+                        console.log(data['products'])
+                        data['products'].forEach(element => {
+                            productList.push(element)
+                        });                    
+                        const productSel=document.getElementById('productSelect');
+                        productList.forEach(productItem=>{
+                            // console.log(index)
+                            const productOption=document.createElement('option');
+                            productOption.value=productItem[0];
+                            productOption.text=productItem[1];
+                            // if(index===0){
+                            //     productOption.selected=true;
+                            // }
+                            productSel.appendChild(productOption);
+                            productIdNameDic[productItem[0]]=productItem[1];
+                            productIdProducerDic[productItem[0]]=productItem[2];
+                        });
+                        //显示生产商
+                        displayProducer();
+                                           
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+
+        }
+
+        function autoCalPrice(){
+            const price=parseFloat(document.getElementById('price').value);
+            const qty=parseFloat(document.getElementById('qty').value);
+            // const totalPrice=parseFloat(document.getElementById('totalPrice').value);
+            let totalPrice=price*qty;
+            const totalPriceBox=document.getElementById('totalPrice');
+            if(totalPrice){
+                totalPriceBox.placeholder=totalPrice;
+                totalPriceBox.value=totalPrice;
+            }          
+        }
+
+
+
+        function submit(){
+            const dateTime=document.getElementById('purchaseDateTime').value;
+            const oprNameSelect=document.getElementById('oprNameSelect').value;
+            const productSelect=document.getElementById('productSelect').value;
+            const producerName=document.getElementById('producerName').value;
+            const productUnit=document.getElementById('productUnit').value;
+            const gperbox=document.getElementById('gperbox').value;
+            const price=document.getElementById('price').value;
+            const qty=document.getElementById('qty').value;
+            const totalPrice=document.getElementById('totalPrice').value;
+            const cmt=document.getElementById('cmt').value;
+            const prompt_info=document.getElementById('info');
+            prompt_info.style.display='none';
+
+
+            console.log(dateTime);
+            const data={
+                'date_time':dateTime,
+                'opr_name':oprNameSelect,
+                'product_id':productSelect,
+                'producer_name':producerName,
+                'product_unit':productUnit,
+                'equal_g':gperbox,
+                'price':price,
+                'qty':qty,
+                'total_price':totalPrice,
+                'cmt':cmt
+            }
+
+            fetch('/ktt_purchase_deal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(data)
+                    })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log(data);    
+                      if(data['res']==='ok'){
+                        console.log('ok')   
+                        const prompt_info=document.getElementById('info');
+                        //(opr_time,goods_name,qty2,goods_unit2,opr_name)
+                        prompt_info.style.display='block';
+                        prompt_info.innerText=`${data['prompt'][0]} ${data['prompt'][1]} ${data['prompt'][2]} ${data['prompt'][3]} 入库成功，入库人：${data['prompt'][4]}`
+                      }else{
+                        prompt_info.style.display='block';
+                        prompt_info.innerText='数据写入错误，请联系管理员。'
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                      alert("提交失败，请稍后再试");
+                  });
+
+
+        }
+
+
+        function hideDownload(){
+            const dl=document.getElementById('dl');
+            // const prompt=document.getElementById('prompt');
+            // prompt.innerText='';
+            // prompt.style.display='block';
+            dl.style.display='none';
+        }
+
+
+    </script>
+    
+    </body>

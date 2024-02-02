@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>团团好果好物出库</title>
+        <link rel="stylesheet" href="../static/css/ej.css">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="background-color:#fffbf6">
+        <div><h4>出库时间</h4></div>
+        <div><input id="saleDateTime" type="datetime-local" style="width:150px;">
+        </div>
+
+        <div>
+            <h4>出库人
+            <span><select id='oprNameSelect'>
+                
+            </select></span>
+        </h4>
+        </div>
+
+        <div>
+            <h4>出库商品
+            <span><select id='specSelect' style="width:140px;" onchange="showUnitName(),autoCalInventory()">                
+            </select></span>
+            </h4>
+        </div>
+
+        <div>
+            <h4>单位: 
+            <span id="unitName"></span>
+            <!-- <span><select id='specUnitSelect'>                      
+            </select></span> -->
+            </h4>
+        </div>   
+    
+        <div>
+            <h4>出库数量
+            <input id="qty" style="width:50px;" onchange="autoCalPrice(),autoCalInventory()">
+            </h4>
+            <div id="overStockInfo"></div>
+        </div>
+
+        <div>
+            <h4>单价
+                <input id="price" style="width:50px;" type="number" step="0.01" onchange="autoCalPrice()"> 元
+            </h4>
+        </div>
+
+        <div>
+            <h4>总金额
+            <input id="totalPrice" style="width:50px;" type="number" step="0.01"> 元
+            </h4>
+        </div>
+
+
+        <div>
+            <h4>领用用途</h4>
+            <textarea id="useFor" style="width:200px;" type="text" > </textarea>
+            
+        </div>
+
+        <div>
+            <h4>备注</h4>
+            <textarea id="cmt" style="width:200px;" type="text" > </textarea>            
+        </div>    
+        
+        <hr>
+        <div>
+            <div id="info"></div>
+        </div>
+       
+        <br>
+        <div><button id="submit" onclick="submit()">出库</button></div>
+        <br>
+        <div><a href="./ktt_tea_menu">返回主菜单</a></div>
+
+
+
+    <script src="../static/js/common.js"></script>
+    <script>
+        let proType='茶';
+        let productIdNameDic={};      
+        let specUnitName={};
+        let specPkg={};
+        let pkgPro={};
+        let stockQty={};
+        let startSpecId;
+        let startSpecIdNum;
+        document.addEventListener("DOMContentLoaded", function(){     
+            selectToday('saleDateTime','dateTime');            
+            fetchOpr();            
+            fetchProductsStocks();   
+
+            Promise.all([fetchSpecs(),fetchPkgs(),fetchProductsStocks(),fetchProduct()])
+                .then((values)=>{
+                    specPkg=values[0];
+                    pkgPro=values[1];
+                    productIdNameDic=values[3]
+                    const stocks=values[2]
+                    
+                    console.log(specPkg,pkgPro,productIdNameDic,stocks)  
+                      
+                    stocks.forEach(stk=>{
+                        stockQty[stk[0]]=stk[4]
+                    })                
+                    autoCalInventory();
+
+                })
+                .catch(error => {
+                console.error('Error:', error);                      
+            });
+
+
+            
+        });
+
+        function autoCalInventory(){
+            document.getElementById('submit').disabled=false;
+            const overStockInfo=document.getElementById('overStockInfo');
+            overStockInfo.innerText='';
+            let specId;
+            if(startSpecIdNum===0){
+                specId=startSpecId;
+                startSpecIdNum=1;
+            }else{
+                specId=document.getElementById('specSelect').value;
+            }
+            const specQty=parseFloat(document.getElementById('qty').value);
+            const pkgQtyList=specPkg[specId]
+            // console.log(pkgQtyList)
+            const pkgs=pkgQtyList.split(';')
+            pkgs.pop();
+            // console.log('pkgs:',pkgs)
+            
+            let proTotalQty={}
+            pkgs.forEach(pkg=>{
+                // console.log('product name:',pkgPro[pkg.split(',')[0]])
+                const proId=pkgPro[pkg.split(',')[0]].split(',')[0];
+                const proQty=pkgPro[pkg.split(',')[0]].split(',')[1];
+                //出库数量
+                const saleSpecQtyStr=document.getElementById('qty').value
+                let saleSpecQty;
+                if(saleSpecQtyStr){
+                    saleSpecQty=parseFloat(saleSpecQtyStr);
+                }else{
+                    saleSpecQty=0
+                }
+                //包装中产品的克数 × 包装数 × 出库数量，即这种产品的总克数
+
+                proTotalQty[proId]=parseFloat(proQty)*parseFloat(pkg.split(',')[1])*saleSpecQty;
+            });
+            // console.log('total pro qty:',proTotalQty);
+            // console.log(productIdNameDic)
+
+            let strStock='';
+            let overNum=0;
+            for(let key in proTotalQty){
+                let inputQty;
+                if(proTotalQty[key]===undefined){
+                    inputQty=0;
+                }else{
+                    inputQty=proTotalQty[key];
+                }
+                let rest=parseFloat(stockQty[key])-inputQty;
+                
+                
+                if(rest<0){
+                    strStock=`<div>本次出库后：</div><div>${strStock} ${productIdNameDic[key]} <span style='color:red;'>超出库存</span> ${Math.abs(rest)} 克</div>`;                   
+                    overNum+=1;
+                }else{
+                    strStock=`<div>本次出库后：</div><div>${strStock} ${productIdNameDic[key]} <span style='color:green;'>剩余</span> ${Math.abs(rest)} 克</div>`;
+                }
+            }
+
+            document.getElementById('overStockInfo').innerHTML=strStock
+
+            if(overNum>0){
+                document.getElementById('submit').disabled=true;
+            }else{
+                document.getElementById('submit').disabled=false;
+            }
+
+        }
+
+        function fetchSpecs(){
+          return  fetch('/ktt_fetch_specs')
+                  .then(response =>response.json())
+                  .then(data => {
+                      if(data['res']==='ok'){
+                        console.log('specs ok')
+                        let specsList=[];
+                        data['specs'].forEach(element => {
+                            specsList.push(element)
+                        });        
+                        // console.log(specsList)      
+                        const specSel=document.getElementById('specSelect');
+                        //规格的单位
+                        let specUnits=[];
+                        specsList.forEach((specItem,index)=>{
+                            const specOption=document.createElement('option');
+                            specOption.value=specItem[0];
+                            specOption.text=specItem[2];
+                            specSel.appendChild(specOption);                                  
+                            //生成规格对应的单位字典，如盒、条等，写入全局变量
+                            specUnitName[specItem[0]]=specItem[1];
+                            //将规格对应的包数数写入全局变量 specPkg
+                            specPkg[specItem[0]]=specItem[5];
+                            // if(index===3){
+                            //     startSpecId=specItem[0];
+                            //     document.getElementById('specSelect').value=specItem[0];
+                            //     specOption.selected=true;
+                            // }
+                        });
+                        startSpecId=specsList[0][0];
+                        document.getElementById('specSelect').value = startSpecId;                    
+                        showUnitName();   
+                        startSpecIdNum = 0;                                                   
+                      }
+                      return specPkg
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+        }
+
+
+        function fetchProductsStocks(){
+            return fetch('/ktt_stat_deal')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data['res']);    
+                        if(data['res']==='ok'){    
+                            console.log('stocks ok,',data['stocks']) 
+                        
+                        }
+                        return data['stocks']
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);                      
+                    });
+        }
+
+        function fetchPkgs(){
+           return fetch('/ktt_fetch_pkgs')
+                .then(response =>response.json())
+                  .then(data => {
+                        
+                      if(data['res']==='ok'){     
+                        console.log('pkgs ok')                   
+                        //将包装对应的产品数写入全局变量  pkgPro
+                        data['pkgs'].forEach(element => {
+                            pkgPro[element[0]]=element[2];
+                        });                 
+                      }
+                    return pkgPro
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+        }
+
+        
+        function showUnitName(){
+            const specId=document.getElementById('specSelect').value;
+            const unitName=document.getElementById('unitName');
+            unitName.innerText=specUnitName[specId]
+            
+        }
+
+        function generateSpecUnits(specUnits){
+            const specSel=document.getElementById('specUnitSelect');
+            console.log(specUnits)
+            specUnits.forEach((unit,index)=>{
+                const specUnitOption=document.createElement('option');
+                specUnitOption.value=unit;
+                specUnitOption.text=unit;
+                specSel.appendChild(specUnitOption);
+                // if(index===0){
+
+                // }
+            });
+
+        }
+
+        function showTransUnit(){
+            const unit=document.getElementById('productUnit');
+            const showGUnit=document.getElementById('equalG');
+            const selectedUnit=document.getElementById('selectedUnit');
+            const cmt=document.getElementById('cmt');
+            if(unit.value!=='g'){
+                showGUnit.style.display='block';
+                selectedUnit.innerText=unit.value;
+                
+
+            }else{
+                showGUnit.style.display='none';
+                selectedUnit.innerText='';
+                cmt.placeholder='';
+                cmt.value='';
+            }
+        }
+
+        function fillCmt(){
+            const unit=document.getElementById('productUnit');
+            const cmt=document.getElementById('cmt');
+            if(unit.value!=='g'){
+                cmt.placeholder='每'+unit.value+'为'+String(document.getElementById('gperbox').value)+'克';
+                cmt.value='每'+unit.value+'为'+String(document.getElementById('gperbox').value)+'克';
+            }else{
+                cmt.placeholder='';
+                cmt.value='';
+            }
+            
+        }
+
+        function fetchOpr(){
+            fetch('/ktt_fetch_opr')
+                  .then(response => response.json())
+                  .then(data => {
+                    //   console.log(data['res']);    
+                      if(data['res']==='ok'){
+                        let oprList=[];
+                        data['opr'].forEach(element => {
+                            oprList.push(element[1])
+                        });        
+                        // console.log(oprList)      
+                        const oprSel=document.getElementById('oprNameSelect');
+                        oprList.forEach(oprName=>{
+                            const oprOption=document.createElement('option');
+                            oprOption.value=oprName;
+                            oprOption.text=oprName;
+                            oprSel.appendChild(oprOption);
+                        });
+                                           
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+
+        }
+
+        function displayProducer(){
+            const productId=document.getElementById('productSelect').value;
+            console.log(productId)
+            const producerName=document.getElementById('producerName');
+            producerName.innerText=productIdProducerDic[productId];
+            
+        }
+
+        function fetchProduct(){
+            return fetch('/ktt_fetch_product')
+                  .then(response => response.json())
+                  .then(data => {
+                      if(data['res']==='ok'){     
+                        console.log('products ok,',data['products'])                   
+                        let productIdNameDic={};                        
+                        data['products'].forEach(element => {
+                            productIdNameDic[element[0]]=element[1]
+                        });                         
+                        console.log(productIdNameDic)
+                        return productIdNameDic;   
+                      }                        
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);                      
+                  });
+        }
+
+        function autoCalPrice(){
+            const price=parseFloat(document.getElementById('price').value);
+            const qty=parseFloat(document.getElementById('qty').value);
+            // const totalPrice=parseFloat(document.getElementById('totalPrice').value);
+            let totalPrice=price*qty;
+            const totalPriceBox=document.getElementById('totalPrice');
+            if(totalPrice){
+                totalPriceBox.placeholder=totalPrice;
+                totalPriceBox.value=totalPrice;
+            }          
+        }
+
+        function submit(){
+            const dateTime=document.getElementById('saleDateTime').value;
+            const oprNameSelect=document.getElementById('oprNameSelect').value;
+            const specSelect=document.getElementById('specSelect').value;
+            const unitName=document.getElementById('unitName').value;
+            const qty=document.getElementById('qty').value;
+            const price=document.getElementById('price').value;
+            const totalPrice=document.getElementById('totalPrice').value;
+            const useFor=document.getElementById('useFor').value;
+            const cmt=document.getElementById('cmt').value;
+            const prompt_info=document.getElementById('info');
+            prompt_info.style.display='none';
+
+
+            console.log(dateTime);
+            const data={
+                'date_time':dateTime,
+                'opr_name':oprNameSelect,
+                'spec_id':specSelect,
+                'unit_name':unitName,
+                'qty':qty,
+                'price':price,
+                'total_price':totalPrice,
+                'use_for':useFor,
+                'cmt':cmt
+            }
+
+            fetch('/ktt_sale_deal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(data)
+                    })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log(data);    
+                      if(data['res']==='ok'){
+                        console.log('ok')   
+                        const prompt_info=document.getElementById('info');
+                        //(opr_time,goods_name,qty2,goods_unit2,opr_name)
+                        // prompt_info.style.display='block';
+                        // prompt_info.innerText=`${data['prompt'][0].replace('T','  ')} ${data['prompt'][1]} ${data['prompt'][2]} ${data['prompt'][3]} 出库成功，出库人：${data['prompt'][4]}`
+                        alert(`${data['prompt'][0].replace('T','  ')}\n${data['prompt'][1]} ${data['prompt'][2]} ${data['prompt'][3]}\n出库成功\n出库人：${data['prompt'][4]}`)
+                        location.reload();
+                    }else{
+                        prompt_info.style.display='block';
+                        prompt_info.innerText='数据写入错误，请联系管理员。'
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                      alert("提交失败，请稍后再试");
+                  });
+        }
+
+
+ 
+
+
+    </script>
+    
+    </body>

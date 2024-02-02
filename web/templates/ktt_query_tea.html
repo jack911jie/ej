@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>团团好果好物入库</title>
+        <link rel="stylesheet" href="../static/css/ej.css">
+        <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="background-color:#fffbf6">
+        <div id="title"><h2>查询库存</h2></div>       
+        
+       
+        <br>
+        <div><button id="submit" onclick="submit()">查询</button></div>
+        <br>
+        <div><a href="./ktt_tea_menu">返回主菜单</a></div>
+
+
+
+    <script src="../static/js/common.js"></script>
+    <script>
+        let productIdNameDic={};       
+        let productIdProducerDic={};
+        let stocksData;
+        document.addEventListener("DOMContentLoaded", function(){       
+            // Promise.all([fetchProductsStocks()])
+            // .then(values=>{
+            //     stocksData=values[0];
+            //     displayStocks();
+            // })
+            // .catch(error => {
+            //     console.error('Error:', error);                      
+            // });
+
+            fetchProductsStocks();
+            
+        });
+
+        function fetchProductsStocks(){
+            return fetch('/ktt_stat_deal')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data['res']);    
+                        if(data['res']==='ok'){    
+                            console.log('stocks ok,',data['stocks']) 
+                        
+                        }
+                        stocksData=data['stocks'];
+                        displayStocks();
+                        return data['stocks']
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);                      
+                    });
+        }
+
+        function displayStocks(){
+            let divs=''
+            stocksData.forEach(stk => {
+                const div=`<div> <h3><span style='color:red;'>${stk[1]}</span>  <span style='font-size:12px;'>单位：克（g）</span></h3></div>
+                            <div> 库  存：${stk[2]} g</div>
+                            <div> 已出库：${stk[3]} g</div>
+                            <div> 剩  余：${stk[4]} g</div>
+                            <hr>
+                            `
+                divs=divs+div;                
+            });
+
+            const titleDiv=document.getElementById('title');
+            const newDiv=document.createElement('div');
+            newDiv.innerHTML=divs;
+            titleDiv.insertAdjacentHTML('afterend',newDiv.outerHTML);
+        }
+
+        function submit(){
+            location.reload();
+        }
+
+
+    </script>
+    
+    </body>

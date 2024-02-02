@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>三恒工作室茶叶</title>
+    <link rel="stylesheet" href="../static/css/ej.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> 
+</head>
+<body style="background-color:#fffbf6">
+    <div id="container" style="text-align:center;align-items: center;">
+        <div style="font-size:36px;color:rgb(177, 160, 52);margin:15px;">三恒工作室茶叶</div>
+
+        <div style="width:200px;height:60px;background:#dcf3d9;margin:10px;">
+            <div class="cover-button" ><a href='./ktt_purchase_tea' style="color:rgb(66, 144, 68)">茶叶入库</a></div>
+        </div>
+        
+        <div style="width:200px;height:60px;background:#f3d9d9;margin:10px;">
+            <div class="cover-button"><a href='./ktt_sale_tea' style="color:rgb(209, 75, 63)">茶叶出库</a></div>
+        </div>
+
+        <div style="width:200px;height:60px;background:#d9f3f3;margin:10px;">
+            <div class="cover-button"><a href='./ktt_query_tea' style="color:rgb(45, 113, 202)">库存查询</a></div>
+        </div>
+
+    </div>   
+    <script src="../static/js/common.js"></script>
+    <script>
+        let weekday;
+        document.addEventListener('DOMContentLoaded',function(){
+            weekday=showDateandWeekDay("dateAndWeekday");
+            selectToday('dateInput','date');
+            
+        });
+    </script>
+</body>
+</html>
