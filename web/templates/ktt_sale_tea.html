@@ -166,14 +166,14 @@
                 
                 
                 if(rest<0){
-                    strStock=`<div>本次出库后：</div><div>${strStock} ${productIdNameDic[key]} <span style='color:red;'>超出库存</span> ${Math.abs(rest)} 克</div>`;                   
+                    strStock=`<div>${strStock} ${productIdNameDic[key]} <span style='color:red;'>超出库存</span> ${Math.abs(rest)} 克</div>`;                   
                     overNum+=1;
                 }else{
-                    strStock=`<div>本次出库后：</div><div>${strStock} ${productIdNameDic[key]} <span style='color:green;'>剩余</span> ${Math.abs(rest)} 克</div>`;
+                    strStock=`<div>${strStock} ${productIdNameDic[key]} <span style='color:green;'>剩余</span> ${Math.abs(rest)} 克</div>`;
                 }
             }
 
-            document.getElementById('overStockInfo').innerHTML=strStock
+            document.getElementById('overStockInfo').innerHTML='<div>本次出库后：</div>'+strStock
 
             if(overNum>0){
                 document.getElementById('submit').disabled=true;
