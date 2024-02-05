@@ -331,7 +331,7 @@ class EjService(Flask):
         cursor=conn.cursor();
         try: 
             #如果没有记录，写入salt值，如有，更新。
-            sql=f'select spec_id,spec_unit,spec_name,goods_type,goods_type2,pkg_list from specs'
+            sql=f'select spec_id,spec_unit,spec_name,goods_type,goods_type2,pkg_list,price,price2,price2_on_pkg,price_cmt from specs'
             cursor.execute(sql)
             res=cursor.fetchall()
             print(res)

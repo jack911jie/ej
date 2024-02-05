@@ -25,6 +25,11 @@
             </select></span>
             </h4>
         </div>
+        <div>
+            <h4>建议零售价：
+            <span id="suggestedPrice"></span>
+            </h4>
+        </div>
 
         <div>
             <h4>单位: 
@@ -62,7 +67,7 @@
 
         <div>
             <h4>备注</h4>
-            <textarea id="cmt" style="width:200px;" type="text" > </textarea>            
+            <textarea id="cmt" rows=6 style="width:200px;" placeholder="可以填写谁垫付了多少钱，或者是谁代收了多少钱。&#10;&#10;如：团团垫付108元"></textarea>            
         </div>    
         
         <hr>
@@ -83,6 +88,7 @@
         let productIdNameDic={};      
         let specUnitName={};
         let specPkg={};
+        let specPrice={};
         let pkgPro={};
         let stockQty={};
         let startSpecId;
@@ -94,7 +100,8 @@
 
             Promise.all([fetchSpecs(),fetchPkgs(),fetchProductsStocks(),fetchProduct()])
                 .then((values)=>{
-                    specPkg=values[0];
+                    specPkg=values[0]['specPkg'];
+                    specPrice=values[0]['specPrice'];
                     pkgPro=values[1];
                     productIdNameDic=values[3]
                     const stocks=values[2]
@@ -126,7 +133,20 @@
             }else{
                 specId=document.getElementById('specSelect').value;
             }
+            const suggestedPrice=document.getElementById('suggestedPrice');  
             const specQty=parseFloat(document.getElementById('qty').value);
+            if(specPrice[specId][2]>0){
+                const sgstPrice=parseFloat(specPrice[specId][2]);
+                if(specQty>=sgstPrice){
+                    suggestedPrice.innerText=`${specPrice[specId][1]} 元`;
+                }else{
+                    suggestedPrice.innerText=`${specPrice[specId][0]} 元`;
+                }                
+            }else{
+                suggestedPrice.innerText=`${specPrice[specId][0]} 元`;
+            }
+
+
             const pkgQtyList=specPkg[specId]
             // console.log(pkgQtyList)
             const pkgs=pkgQtyList.split(';')
@@ -206,6 +226,8 @@
                             specUnitName[specItem[0]]=specItem[1];
                             //将规格对应的包数数写入全局变量 specPkg
                             specPkg[specItem[0]]=specItem[5];
+                            //将规格对应的建议零售价写入全局变量 specPkg
+                            specPrice[specItem[0]]=[specItem[6],specItem[7],specItem[8]];
                             // if(index===3){
                             //     startSpecId=specItem[0];
                             //     document.getElementById('specSelect').value=specItem[0];
@@ -217,7 +239,7 @@
                         showUnitName();   
                         startSpecIdNum = 0;                                                   
                       }
-                      return specPkg
+                      return {'specPkg':specPkg,'specPrice':specPrice}
                   })
                   .catch(error => {
                       console.error('Error:', error);                      
