@@ -334,7 +334,7 @@ class EjService(Flask):
             sql=f'select spec_id,spec_unit,spec_name,goods_type,goods_type2,pkg_list,price,price2,price2_on_pkg,price_cmt from specs'
             cursor.execute(sql)
             res=cursor.fetchall()
-            print(res)
+            # print(res)
             cursor.close()
             conn.close()
             return jsonify({'res':'ok','specs':res})   
@@ -346,7 +346,7 @@ class EjService(Flask):
 
     #获取人员列表
     def ktt_fetch_opr(self):
-        # print('connecting database...')
+        print('connecting opr database...')
         conn=self.connect_mysql();
         cursor=conn.cursor();
         try: 
@@ -354,7 +354,7 @@ class EjService(Flask):
             sql=f'select opr_id,opr_name from opr'
             cursor.execute(sql)
             res=cursor.fetchall()
-            print(res)
+            # print(res)
             cursor.close()
             conn.close()
             return jsonify({'res':'ok','opr':res})   
@@ -366,7 +366,7 @@ class EjService(Flask):
 
     #获取包装列表
     def ktt_fetch_pkgs(self):
-        print('connecting database...')
+        print('connecting package database...')
         conn=self.connect_mysql();
         cursor=conn.cursor();
         try: 
@@ -385,14 +385,14 @@ class EjService(Flask):
 
     #获取产品列表
     def ktt_fetch_product(self):
-        print('connecting database...')
+        print('connecting product database...')
         conn=self.connect_mysql();
         cursor=conn.cursor();
         try: 
             sql=f'select goods_id,goods_name,goods_producer from products'
             cursor.execute(sql)
             res=cursor.fetchall()
-            print(res)
+            # print(res)
             cursor.close()
             conn.close()
             return jsonify({'res':'ok','products':res})   
