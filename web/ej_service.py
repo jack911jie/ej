@@ -136,10 +136,10 @@ class EjService(Flask):
         cursor=conn.cursor();
         try:
             sql=f'select goods_id,goods_type,goods_name,goods_name2,goods_producer from products where goods_id=%s'
-            print(data['product_id'])
+            # print(data['product_id'])
             cursor.execute(sql,data['product_id'])
             product_info=cursor.fetchall()
-            print(product_info)
+            # print(product_info)
             goods_id=data['product_id']
             goods_type=product_info[0][1]
             goods_name=product_info[0][2]
@@ -301,7 +301,7 @@ class EjService(Flask):
             '''
             cursor.execute(sql)
             res=cursor.fetchall()
-            print(res)            
+            # print(res)            
             return jsonify({'res':'ok','stocks':res})
 
         except Exception as e:
